@@ -9,11 +9,17 @@
     "shared"
   ],
   "scripts": {
+    "dev": "concurrently --names be,fe --prefix-colors cyan,magenta \"yarn dev:be\" \"yarn dev:fe\"",
+    "dev:be": "yarn workspace @admin-study-catalyst/backend dev",
+    "dev:fe": "yarn workspace @admin-study-catalyst/frontend dev",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "prepare": "husky"
+  },
+  "dependencies": {
+    "concurrently": "^9.1.2"
   },
   "devDependencies": {
     "@commitlint/cli": "^20.5.3",
