@@ -1,5 +1,8 @@
 # admin-study-catalyst
-Here is your **complete, unified Backend Requirement Document (Admin Portal + Student Module + Membership + QR System)** — structured cleanly so your dev team can directly build from it.
+
+Here is your **complete, unified Backend Requirement Document (Admin Portal +
+Student Module + Membership + QR System)** — structured cleanly so your dev team
+can directly build from it.
 
 ---
 
@@ -11,15 +14,16 @@ Here is your **complete, unified Backend Requirement Document (Admin Portal + St
 
 ## 1. 📌 System Overview
 
-The system is a **Medical Learning Management System (LMS)** designed for students preparing for competitive exams (e.g., EMREE).
+The system is a **Medical Learning Management System (LMS)** designed for
+students preparing for competitive exams (e.g., EMREE).
 
 ### Core Concept:
 
-* Learning happens through **question-based progression**
-* Each unit contains questions
-* Students complete questions sequentially
-* After completing a unit → student can attempt an exam
-* Membership determines access (Normal vs Premium)
+- Learning happens through **question-based progression**
+- Each unit contains questions
+- Students complete questions sequentially
+- After completing a unit → student can attempt an exam
+- Membership determines access (Normal vs Premium)
 
 ---
 
@@ -27,17 +31,17 @@ The system is a **Medical Learning Management System (LMS)** designed for studen
 
 ### 2.1 Admin
 
-* Full system control
-* Content management
-* Student management
-* Membership & QR management
-* Analytics & monitoring
+- Full system control
+- Content management
+- Student management
+- Membership & QR management
+- Analytics & monitoring
 
 ### 2.2 Student
 
-* Access learning content
-* Attempt exams
-* Upgrade membership
+- Access learning content
+- Attempt exams
+- Upgrade membership
 
 ---
 
@@ -45,21 +49,21 @@ The system is a **Medical Learning Management System (LMS)** designed for studen
 
 ### Features:
 
-* Login
-* Forgot password
-* Reset password
+- Login
+- Forgot password
+- Reset password
 
 ### Requirements:
 
-* JWT-based authentication
-* Password hashing (bcrypt)
-* Role-based access control
+- JWT-based authentication
+- Password hashing (bcrypt)
+- Role-based access control
 
 ### APIs:
 
-* POST `/auth/login`
-* POST `/auth/forgot-password`
-* POST `/auth/reset-password`
+- POST `/auth/login`
+- POST `/auth/forgot-password`
+- POST `/auth/reset-password`
 
 ---
 
@@ -90,16 +94,16 @@ The system is a **Medical Learning Management System (LMS)** designed for studen
 
 #### Case 1: Direct Registration
 
-* membership_type = `normal`
-* membership_source = `direct_registration`
+- membership_type = `normal`
+- membership_source = `direct_registration`
 
 #### Case 2: QR/Book Code Registration
 
-* Validate code
-* membership_type = `premium`
-* membership_source = `book_qr`
-* Link code to user
-* Mark code as used
+- Validate code
+- membership_type = `premium`
+- membership_source = `book_qr`
+- Link code to user
+- Mark code as used
 
 ---
 
@@ -107,17 +111,16 @@ The system is a **Medical Learning Management System (LMS)** designed for studen
 
 #### API:
 
-* POST `/student/upgrade-membership`
+- POST `/student/upgrade-membership`
 
 #### Logic:
 
-* Validate book code
-* If valid:
-
-  * membership_type → `premium`
-  * membership_source → `manual_upgrade`
-  * link code
-  * mark code as used
+- Validate book code
+- If valid:
+  - membership_type → `premium`
+  - membership_source → `manual_upgrade`
+  - link code
+  - mark code as used
 
 ---
 
@@ -142,12 +145,12 @@ The system is a **Medical Learning Management System (LMS)** designed for studen
 
 ### 5.2 Admin Features
 
-* Generate single code
-* Bulk generate codes
-* Export codes (for printing)
-* Block/unblock codes
-* Expire codes
-* Track usage
+- Generate single code
+- Bulk generate codes
+- Export codes (for printing)
+- Block/unblock codes
+- Expire codes
+- Track usage
 
 ---
 
@@ -169,8 +172,8 @@ The system is a **Medical Learning Management System (LMS)** designed for studen
 
 ### Features:
 
-* CRUD operations
-* Search/filter
+- CRUD operations
+- Search/filter
 
 ---
 
@@ -195,10 +198,10 @@ The system is a **Medical Learning Management System (LMS)** designed for studen
 
 ### Features:
 
-* CRUD
-* Filter by exam type
-* Upload image
-* Access control
+- CRUD
+- Filter by exam type
+- Upload image
+- Access control
 
 ---
 
@@ -227,10 +230,10 @@ The system is a **Medical Learning Management System (LMS)** designed for studen
 
 ### Features:
 
-* CRUD
-* Audio upload
-* Rich text description
-* Unit mapping
+- CRUD
+- Audio upload
+- Rich text description
+- Unit mapping
 
 ---
 
@@ -259,9 +262,9 @@ The system is a **Medical Learning Management System (LMS)** designed for studen
 
 ### Features:
 
-* CRUD
-* Filter by difficulty
-* Filter by unit
+- CRUD
+- Filter by difficulty
+- Filter by unit
 
 ---
 
@@ -283,8 +286,8 @@ The system is a **Medical Learning Management System (LMS)** designed for studen
 
 ### Logic:
 
-* Sequential unlocking
-* Track completion per question
+- Sequential unlocking
+- Track completion per question
 
 ---
 
@@ -296,14 +299,14 @@ The system is a **Medical Learning Management System (LMS)** designed for studen
 
 Student selects:
 
-* Unit
-* Difficulty
+- Unit
+- Difficulty
 
 ### Backend:
 
-* Fetch questions from `exam_questions`
-* Filter by unit + difficulty
-* Randomize questions
+- Fetch questions from `exam_questions`
+- Filter by unit + difficulty
+- Randomize questions
 
 ---
 
@@ -339,9 +342,9 @@ Student selects:
 
 ### 11.4 Submission Logic
 
-* Evaluate answers
-* Calculate score
-* Store results
+- Evaluate answers
+- Calculate score
+- Store results
 
 ---
 
@@ -362,7 +365,7 @@ Student selects:
 
 ### Update Logic:
 
-* Increment stats after each exam submission
+- Increment stats after each exam submission
 
 ---
 
@@ -371,8 +374,8 @@ Student selects:
 ```
 accuracy = correct_attempts / total_attempts
 
-> 0.8 → Easy  
-0.5–0.8 → Medium  
+> 0.8 → Easy
+0.5–0.8 → Medium
 < 0.5 → Hard
 ```
 
@@ -384,32 +387,32 @@ accuracy = correct_attempts / total_attempts
 
 ### 13.1 Student Management
 
-* View all students
-* Filter:
+- View all students
+- Filter:
+  - membership
+  - source
 
-  * membership
-  * source
-* Block/unblock users
-* Modify membership
-* View exam history
+- Block/unblock users
+- Modify membership
+- View exam history
 
 ---
 
 ### 13.2 Question Analytics
 
-* Most attempted questions
-* Most wrong questions
-* Difficulty insights
+- Most attempted questions
+- Most wrong questions
+- Difficulty insights
 
 ---
 
 ### 13.3 Membership Analytics
 
-* Total users
-* Normal vs Premium
-* QR registrations
-* Manual upgrades
-* Code usage stats
+- Total users
+- Normal vs Premium
+- QR registrations
+- Manual upgrades
+- Code usage stats
 
 ---
 
@@ -421,14 +424,14 @@ accuracy = correct_attempts / total_attempts
 
 #### Normal Users:
 
-* Limited access
-* Restricted units/questions
-* No exam access (optional rule)
+- Limited access
+- Restricted units/questions
+- No exam access (optional rule)
 
 #### Premium Users:
 
-* Full access
-* Exams enabled
+- Full access
+- Exams enabled
 
 ---
 
@@ -436,9 +439,9 @@ accuracy = correct_attempts / total_attempts
 
 Every API must validate:
 
-* User role
-* Membership type
-* Content access_type
+- User role
+- Membership type
+- Content access_type
 
 ---
 
@@ -448,26 +451,26 @@ Every API must validate:
 
 ### Supported Files:
 
-* Unit images
-* Question audio
+- Unit images
+- Question audio
 
 ### Requirements:
 
-* Cloud storage (AWS S3 recommended)
-* Store file URLs in DB
-* Validate file size/type
+- Cloud storage (AWS S3 recommended)
+- Store file URLs in DB
+- Validate file size/type
 
 ---
 
 ## 16. 🔐 Security Requirements
 
-* JWT authentication
-* Role-based authorization
-* Input validation
-* Secure file uploads
-* Unique secure book codes
-* One-time code usage
-* Expired/blocked code validation
+- JWT authentication
+- Role-based authorization
+- Input validation
+- Secure file uploads
+- Unique secure book codes
+- One-time code usage
+- Expired/blocked code validation
 
 ---
 
@@ -477,34 +480,30 @@ Every API must validate:
 
 ### Auth
 
-* POST `/auth/login`
-* POST `/auth/forgot-password`
+- POST `/auth/login`
+- POST `/auth/forgot-password`
 
 ---
 
 ### Admin
 
-* CRUD `/exam-types`
-* CRUD `/units`
-* CRUD `/questions`
-* CRUD `/exam-questions`
-* CRUD `/book-codes`
-* GET `/students`
-* GET `/analytics`
+- CRUD `/exam-types`
+- CRUD `/units`
+- CRUD `/questions`
+- CRUD `/exam-questions`
+- CRUD `/book-codes`
+- GET `/students`
+- GET `/analytics`
 
 ---
 
 ### Student
 
-* POST `/register`
-* POST `/upgrade-membership`
-* GET `/units`
-* GET `/questions`
-* POST `/exam/create`
-* POST `/exam/submit`
+- POST `/register`
+- POST `/upgrade-membership`
+- GET `/units`
+- GET `/questions`
+- POST `/exam/create`
+- POST `/exam/submit`
 
 ---
-
-
-
-
