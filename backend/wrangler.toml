@@ -17,6 +17,9 @@ id = "local-kv-placeholder"
 binding = "R2"
 bucket_name = "admin-study-catalyst-assets"
 
+[triggers]
+crons = ["0 * * * *"]
+
 [vars]
 ADMIN_ORIGIN = "http://localhost:5174"
 STUDENT_ORIGIN = "http://localhost:5173"
