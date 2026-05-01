@@ -20,6 +20,9 @@ coverage/
 .yarn/install-state.gz
 .pnp.*
 
+# Git worktrees (superpowers / local isolation)
+.worktrees/
+
 # Editor
 .vscode/*
 !.vscode/extensions.json
