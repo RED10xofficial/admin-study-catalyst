@@ -64,8 +64,7 @@ backend/tests/modules/
 - Create: `shared/src/validators/exams.validators.ts`
 - Create: `shared/src/validators/admin.validators.ts`
 - Modify: `shared/src/validators/index.ts`
-
-- [ ] **Step 1: Create shared/src/validators/progress.validators.ts**
+- **Step 1: Create shared/src/validators/progress.validators.ts**
 
 ```typescript
 import { z } from 'zod';
@@ -78,7 +77,7 @@ export const submitProgressSchema = z.object({
 export type SubmitProgressInput = z.infer<typeof submitProgressSchema>;
 ```
 
-- [ ] **Step 2: Create shared/src/validators/exams.validators.ts**
+- **Step 2: Create shared/src/validators/exams.validators.ts**
 
 ```typescript
 import { z } from 'zod';
@@ -101,7 +100,7 @@ export type CreateExamInput = z.infer<typeof createExamSchema>;
 export type SubmitExamInput = z.infer<typeof submitExamSchema>;
 ```
 
-- [ ] **Step 3: Create shared/src/validators/admin.validators.ts**
+- **Step 3: Create shared/src/validators/admin.validators.ts**
 
 ```typescript
 import { z } from 'zod';
@@ -126,7 +125,7 @@ export type StudentListQuery = z.infer<typeof studentListSchema>;
 export type UpdateStudentInput = z.infer<typeof updateStudentSchema>;
 ```
 
-- [ ] **Step 4: Update shared/src/validators/index.ts**
+- **Step 4: Update shared/src/validators/index.ts**
 
 ```typescript
 export * from './admin.validators';
@@ -141,7 +140,7 @@ export * from './units.validators';
 export * from './upload.validators';
 ```
 
-- [ ] **Step 5: Commit**
+- **Step 5: Commit**
 
 ```bash
 git add -A
@@ -158,8 +157,7 @@ git commit -m "feat(shared): add validators for progress, exams, and admin modul
 - Create: `backend/src/modules/progress/progress.routes.ts`
 - Create: `backend/tests/modules/progress.test.ts`
 - Modify: `backend/src/index.ts`
-
-- [ ] **Step 1: Write tests for progress**
+- **Step 1: Write tests for progress**
 
 ```typescript
 // backend/tests/modules/progress.test.ts
@@ -336,7 +334,7 @@ describe('Learning Progress', () => {
 });
 ```
 
-- [ ] **Step 2: Run — confirm tests fail**
+- **Step 2: Run — confirm tests fail**
 
 ```bash
 yarn test tests/modules/progress.test.ts
@@ -344,7 +342,7 @@ yarn test tests/modules/progress.test.ts
 
 Expected: FAIL.
 
-- [ ] **Step 3: Create backend/src/modules/progress/progress.service.ts**
+- **Step 3: Create backend/src/modules/progress/progress.service.ts**
 
 ```typescript
 import { and, eq } from 'drizzle-orm';
@@ -452,7 +450,7 @@ export async function getUnitProgress(
 }
 ```
 
-- [ ] **Step 4: Create backend/src/modules/progress/progress.routes.ts**
+- **Step 4: Create backend/src/modules/progress/progress.routes.ts**
 
 ```typescript
 import { Hono } from 'hono';
@@ -492,14 +490,14 @@ progressApp.get('/unit/:unitId', async (c) => {
 export { progressApp };
 ```
 
-- [ ] **Step 5: Mount in index.ts**
+- **Step 5: Mount in index.ts**
 
 ```typescript
 import { progressApp } from './modules/progress/progress.routes';
 app.route('/student/progress', progressApp);
 ```
 
-- [ ] **Step 6: Run tests — confirm pass**
+- **Step 6: Run tests — confirm pass**
 
 ```bash
 yarn test tests/modules/progress.test.ts
@@ -507,7 +505,7 @@ yarn test tests/modules/progress.test.ts
 
 Expected: 4 passing tests.
 
-- [ ] **Step 7: Commit**
+- **Step 7: Commit**
 
 ```bash
 git add -A
@@ -524,8 +522,7 @@ git commit -m "feat(progress): add sequential learning progress with idempotent 
 - Create: `backend/src/modules/exams/exams.routes.ts` (partial)
 - Create: `backend/tests/modules/exams.test.ts` (partial)
 - Modify: `backend/src/index.ts`
-
-- [ ] **Step 1: Write tests for exam creation**
+- **Step 1: Write tests for exam creation**
 
 ```typescript
 // backend/tests/modules/exams.test.ts
@@ -753,7 +750,7 @@ describe('Exam System — Creation', () => {
 });
 ```
 
-- [ ] **Step 2: Run — confirm tests fail**
+- **Step 2: Run — confirm tests fail**
 
 ```bash
 yarn test tests/modules/exams.test.ts
@@ -761,8 +758,7 @@ yarn test tests/modules/exams.test.ts
 
 Expected: FAIL.
 
-- [ ] **Step 3: Create backend/src/modules/exams/exams.service.ts (create
-      portion)**
+- **Step 3: Create backend/src/modules/exams/exams.service.ts (create portion)**
 
 ```typescript
 import { and, count, eq } from 'drizzle-orm';
@@ -940,8 +936,7 @@ export async function createExam(
 }
 ```
 
-- [ ] **Step 4: Create backend/src/modules/exams/exams.routes.ts (create
-      portion)**
+- **Step 4: Create backend/src/modules/exams/exams.routes.ts (create portion)**
 
 ```typescript
 import { Hono } from 'hono';
@@ -972,14 +967,14 @@ examsApp.post('/', zValidator('json', createExamSchema), async (c) => {
 export { examsApp };
 ```
 
-- [ ] **Step 5: Mount in index.ts**
+- **Step 5: Mount in index.ts**
 
 ```typescript
 import { examsApp } from './modules/exams/exams.routes';
 app.route('/student/exams', examsApp);
 ```
 
-- [ ] **Step 6: Run tests — confirm pass**
+- **Step 6: Run tests — confirm pass**
 
 ```bash
 yarn test tests/modules/exams.test.ts
@@ -987,7 +982,7 @@ yarn test tests/modules/exams.test.ts
 
 Expected: 4 passing tests.
 
-- [ ] **Step 7: Commit**
+- **Step 7: Commit**
 
 ```bash
 git add -A
@@ -1003,8 +998,7 @@ git commit -m "feat(exams): add exam creation with prerequisite checks and quest
 - Modify: `backend/src/modules/exams/exams.service.ts`
 - Modify: `backend/src/modules/exams/exams.routes.ts`
 - Modify: `backend/tests/modules/exams.test.ts`
-
-- [ ] **Step 1: Add submission tests**
+- **Step 1: Add submission tests**
 
 Append to `backend/tests/modules/exams.test.ts`:
 
@@ -1139,7 +1133,7 @@ describe('Exam System — Submission', () => {
 });
 ```
 
-- [ ] **Step 2: Add submit to exams.service.ts**
+- **Step 2: Add submit to exams.service.ts**
 
 Append to `backend/src/modules/exams/exams.service.ts`:
 
@@ -1262,7 +1256,7 @@ export async function submitExam(
 }
 ```
 
-- [ ] **Step 3: Add submit route to exams.routes.ts**
+- **Step 3: Add submit route to exams.routes.ts**
 
 Append to `examsApp`:
 
@@ -1303,7 +1297,7 @@ examsApp.get('/:id', async (c) => {
 });
 ```
 
-- [ ] **Step 4: Run tests — confirm pass**
+- **Step 4: Run tests — confirm pass**
 
 ```bash
 yarn test tests/modules/exams.test.ts
@@ -1311,7 +1305,7 @@ yarn test tests/modules/exams.test.ts
 
 Expected: all exam tests pass.
 
-- [ ] **Step 5: Commit**
+- **Step 5: Commit**
 
 ```bash
 git add -A
@@ -1328,8 +1322,7 @@ git commit -m "feat(exams): add exam submission with atomic d1 transaction and q
 - Create: `backend/src/modules/admin/admin.routes.ts`
 - Create: `backend/tests/modules/admin.test.ts`
 - Modify: `backend/src/index.ts`
-
-- [ ] **Step 1: Write tests for admin student management**
+- **Step 1: Write tests for admin student management**
 
 ```typescript
 // backend/tests/modules/admin.test.ts
@@ -1431,7 +1424,7 @@ describe('Admin — Student Management', () => {
 });
 ```
 
-- [ ] **Step 2: Create backend/src/modules/admin/admin.service.ts**
+- **Step 2: Create backend/src/modules/admin/admin.service.ts**
 
 ```typescript
 import { and, eq } from 'drizzle-orm';
@@ -1578,7 +1571,7 @@ export async function getQuestionAnalytics(db: Db) {
 }
 ```
 
-- [ ] **Step 3: Create backend/src/modules/admin/admin.routes.ts**
+- **Step 3: Create backend/src/modules/admin/admin.routes.ts**
 
 ```typescript
 import { Hono } from 'hono';
@@ -1644,14 +1637,14 @@ adminApp.get('/analytics/questions', async (c) => {
 export { adminApp };
 ```
 
-- [ ] **Step 4: Mount in index.ts**
+- **Step 4: Mount in index.ts**
 
 ```typescript
 import { adminApp } from './modules/admin/admin.routes';
 app.route('/admin', adminApp);
 ```
 
-- [ ] **Step 5: Run tests — confirm pass**
+- **Step 5: Run tests — confirm pass**
 
 ```bash
 yarn test tests/modules/admin.test.ts
@@ -1659,7 +1652,7 @@ yarn test tests/modules/admin.test.ts
 
 Expected: 3 passing tests.
 
-- [ ] **Step 6: Commit**
+- **Step 6: Commit**
 
 ```bash
 git add -A
@@ -1675,8 +1668,7 @@ git commit -m "feat(admin): add student management, membership + question analyt
 - Create: `backend/src/modules/membership/membership.service.ts`
 - Create: `backend/src/modules/membership/membership.routes.ts`
 - Modify: `backend/src/index.ts`
-
-- [ ] **Step 1: Create backend/src/modules/membership/membership.service.ts**
+- **Step 1: Create backend/src/modules/membership/membership.service.ts**
 
 ```typescript
 import { eq } from 'drizzle-orm';
@@ -1738,7 +1730,7 @@ export async function upgradeWithBookCode(
 }
 ```
 
-- [ ] **Step 2: Create backend/src/modules/membership/membership.routes.ts**
+- **Step 2: Create backend/src/modules/membership/membership.routes.ts**
 
 ```typescript
 import { Hono } from 'hono';
@@ -1778,14 +1770,14 @@ membershipApp.post(
 export { membershipApp };
 ```
 
-- [ ] **Step 3: Mount in index.ts**
+- **Step 3: Mount in index.ts**
 
 ```typescript
 import { membershipApp } from './modules/membership/membership.routes';
 app.route('/student/membership', membershipApp);
 ```
 
-- [ ] **Step 4: Commit**
+- **Step 4: Commit**
 
 ```bash
 git add -A
@@ -1801,8 +1793,7 @@ git commit -m "feat(membership): add student book code upgrade endpoint with tra
 - Create: `backend/src/cron/abandoned-exams.ts`
 - Modify: `backend/src/index.ts`
 - Modify: `backend/wrangler.toml`
-
-- [ ] **Step 1: Add cron trigger to wrangler.toml**
+- **Step 1: Add cron trigger to wrangler.toml**
 
 Append to `backend/wrangler.toml`:
 
@@ -1811,7 +1802,7 @@ Append to `backend/wrangler.toml`:
 crons = ["0 * * * *"]  # run every hour
 ```
 
-- [ ] **Step 2: Create backend/src/cron/abandoned-exams.ts**
+- **Step 2: Create backend/src/cron/abandoned-exams.ts**
 
 ```typescript
 import { and, eq, lt } from 'drizzle-orm';
@@ -1838,7 +1829,7 @@ export async function markAbandonedExams(env: Bindings): Promise<void> {
 }
 ```
 
-- [ ] **Step 3: Wire the cron handler into index.ts**
+- **Step 3: Wire the cron handler into index.ts**
 
 The Cloudflare Worker exports must include a `scheduled` handler:
 
@@ -1860,7 +1851,7 @@ export default {
 };
 ```
 
-- [ ] **Step 4: Test the cron handler manually**
+- **Step 4: Test the cron handler manually**
 
 ```bash
 cd backend
@@ -1875,7 +1866,7 @@ curl "http://localhost:8787/__scheduled?cron=*+*+*+*+*"
 
 Expected: `[cron] Marked 0 exam(s) as abandoned` in dev server logs.
 
-- [ ] **Step 5: Commit**
+- **Step 5: Commit**
 
 ```bash
 git add -A
@@ -1894,7 +1885,7 @@ git commit -m "feat(cron): add hourly scheduled handler to mark abandoned exams"
 Students need routes to browse units and questions. These are read-only and
 enforce membership access type.
 
-- [ ] **Step 1: Create backend/src/modules/content/content.routes.ts**
+- **Step 1: Create backend/src/modules/content/content.routes.ts**
 
 ```typescript
 import { Hono } from 'hono';
@@ -1998,14 +1989,14 @@ contentApp.get('/units/:id/questions', async (c) => {
 export { contentApp };
 ```
 
-- [ ] **Step 2: Mount in index.ts**
+- **Step 2: Mount in index.ts**
 
 ```typescript
 import { contentApp } from './modules/content/content.routes';
 app.route('/student', contentApp);
 ```
 
-- [ ] **Step 3: Commit**
+- **Step 3: Commit**
 
 ```bash
 git add -A
@@ -2016,7 +2007,7 @@ git commit -m "feat(content): add student read-only unit and question routes wit
 
 ## Task 9: Final integration — run all tests
 
-- [ ] **Step 1: Run the full test suite**
+- **Step 1: Run the full test suite**
 
 ```bash
 cd backend && yarn test
@@ -2024,7 +2015,7 @@ cd backend && yarn test
 
 Expected: all tests pass with 0 failures.
 
-- [ ] **Step 2: Run lint and format check**
+- **Step 2: Run lint and format check**
 
 ```bash
 cd .. && yarn lint && yarn format:check
@@ -2032,7 +2023,7 @@ cd .. && yarn lint && yarn format:check
 
 Expected: no lint errors, all files formatted.
 
-- [ ] **Step 3: Final commit**
+- **Step 3: Final commit**
 
 ```bash
 git add -A
@@ -2219,17 +2210,16 @@ it('blocks normal-membership student from answering a premium question', async (
 
 The full backend is now implemented:
 
-- [ ] Learning Progress: sequential gate, idempotent upsert, KV membership check
-- [ ] Exam Creation: premium guard, unit completion check, retake prevention,
-      randomization
-- [ ] Exam Submission: single D1 transaction (answers + status + analytics)
-- [ ] Admin Student Management: list, update, self-block guard, KV cache
-      invalidation
-- [ ] Admin Analytics: membership breakdown, question difficulty analytics
-- [ ] Membership Upgrade: student book-code upgrade with D1 transaction
-- [ ] Abandoned Exam Cron: scheduled Worker handler marks exams > 24h as
-      abandoned
-- [ ] Student Content Routes: unit/question browsing with membership enforcement
+- Learning Progress: sequential gate, idempotent upsert, KV membership check
+- Exam Creation: premium guard, unit completion check, retake prevention,
+  randomization
+- Exam Submission: single D1 transaction (answers + status + analytics)
+- Admin Student Management: list, update, self-block guard, KV cache
+  invalidation
+- Admin Analytics: membership breakdown, question difficulty analytics
+- Membership Upgrade: student book-code upgrade with D1 transaction
+- Abandoned Exam Cron: scheduled Worker handler marks exams > 24h as abandoned
+- Student Content Routes: unit/question browsing with membership enforcement
 
 ```bash
 cd backend && yarn test
