@@ -11,6 +11,7 @@
 A Medical Learning Management System for students preparing for competitive exams (e.g. EMREE). Learning is question-driven and sequential. Membership determines content access. The system is fully admin-managed with no self-service content creation.
 
 **Two distinct user experiences, one codebase:**
+
 - **Admin Portal** — content management, student monitoring, membership control, analytics
 - **Student Portal** — sequential learning, exam attempts, membership upgrade
 
@@ -29,15 +30,17 @@ admin-study-catalyst/
 
 ### 2.2 Tech Stack
 
-| Layer | Technology |
-|---|---|
-| Frontend | Vue 3 + Vite + TypeScript |
-| Backend | Hono + Cloudflare Workers + TypeScript |
-| Database | Cloudflare D1 (SQLite) |
-| ORM | Drizzle ORM |
-| Cache | Cloudflare KV |
-| Object Storage | Cloudflare R2 |
-| Testing | Vitest |
+
+| Layer          | Technology                             |
+| -------------- | -------------------------------------- |
+| Frontend       | Vue 3 + Vite + TypeScript              |
+| Backend        | Hono + Cloudflare Workers + TypeScript |
+| Database       | Cloudflare D1 (SQLite)                 |
+| ORM            | Drizzle ORM                            |
+| Cache          | Cloudflare KV                          |
+| Object Storage | Cloudflare R2                          |
+| Testing        | Vitest                                 |
+
 
 ### 2.3 Frontend Build Targets
 
@@ -90,6 +93,7 @@ backend/src/
 ### 2.6 CORS
 
 Worker CORS middleware reads allowed origins from environment variables:
+
 - `ADMIN_ORIGIN` — admin Pages deployment URL
 - `STUDENT_ORIGIN` — student Pages deployment URL
 
@@ -116,6 +120,7 @@ updated_at         TEXT NOT NULL
 ```
 
 **Rules:**
+
 - `role` is always set server-side. Never accepted from client.
 - Students register themselves. Admins are created via seed data only.
 - Deletion is soft-only (`is_active = 0`). Hard delete is not permitted.
@@ -135,6 +140,7 @@ created_at       TEXT NOT NULL
 ```
 
 **Rules:**
+
 - `UNIQUE` on `used_by_user_id` enforces one-code-per-user at DB level.
 - `qr_url` encodes `{STUDENT_ORIGIN}/activate?code={code}`. This URL must never change.
 - Codes normalized to UPPERCASE on generation and input.
@@ -168,6 +174,7 @@ updated_at     TEXT NOT NULL
 ```
 
 **Rules:**
+
 - Soft-delete only (`is_deleted = 1`). Hard delete blocked if student progress exists.
 - `image_url` references R2 object key. R2 upload must succeed before INSERT.
 
@@ -191,6 +198,7 @@ created_at      TEXT NOT NULL
 ```
 
 **Rules:**
+
 - `correct_answer` must equal one of option1–4. Enforced by Zod in shared schema.
 - `description` HTML sanitized server-side before storage.
 - Soft-delete only. Hard delete blocked if student progress records exist.
@@ -215,6 +223,7 @@ created_at        TEXT NOT NULL
 ```
 
 **Rules:**
+
 - Soft-delete only. Hard delete blocked if question is in an active exam or has historical answers.
 
 ### 3.7 student_question_progress
@@ -229,6 +238,7 @@ UNIQUE (student_id, question_id)
 ```
 
 **Rules:**
+
 - Any answer (right or wrong) creates a progress record.
 - Idempotent upsert: `INSERT OR IGNORE` — double-submits are safe.
 - A unit is "complete" when the count of answered questions equals the count of non-deleted questions in the unit.
@@ -250,6 +260,7 @@ UNIQUE (student_id, unit_id)  -- enforces no retakes
 ```
 
 **Rules:**
+
 - `UNIQUE (student_id, unit_id)` enforces no retakes at DB level.
 - Exam creation blocked if student has not completed all learning questions in the unit.
 - Exam creation blocked if student already has a record for this unit (even if abandoned).
@@ -283,6 +294,7 @@ wrong_attempts   INTEGER NOT NULL DEFAULT 0
 ### 4.1 Authentication
 
 **Endpoints:**
+
 - `POST /auth/login` — validate email+password, return access token + set refresh cookie
 - `POST /auth/refresh` — validate httpOnly cookie refresh token against KV, issue new access token
 - `POST /auth/logout` — delete KV refresh token entry, clear cookie
@@ -290,6 +302,7 @@ wrong_attempts   INTEGER NOT NULL DEFAULT 0
 - `POST /auth/reset-password` — validate token, update password hash, invalidate token
 
 **Edge case handling:**
+
 - Login: Same error message for wrong email and wrong password (prevent user enumeration)
 - Login: KV-based rate limiting per IP+email — lockout after 5 failed attempts, 15-min TTL
 - Login: Reject if `is_active = 0`
@@ -301,10 +314,12 @@ wrong_attempts   INTEGER NOT NULL DEFAULT 0
 ### 4.2 Registration
 
 **Endpoints:**
+
 - `POST /auth/register` — direct registration (normal membership)
 - `POST /auth/register` with `book_code` field — QR/code registration (premium membership)
 
 **Edge case handling:**
+
 - `role` field from client body is silently ignored; always assigned `student`
 - Book code validation + user creation wrapped in a single D1 transaction
 - `SELECT book_codes WHERE code = ? AND status = 'unused' AND (expires_at IS NULL OR expires_at > now())` with `FOR UPDATE` equivalent (D1 transaction)
@@ -313,6 +328,7 @@ wrong_attempts   INTEGER NOT NULL DEFAULT 0
 ### 4.3 Book Code Module
 
 **Admin endpoints:**
+
 - `POST /admin/book-codes` — generate single code
 - `POST /admin/book-codes/bulk` — bulk generate (async via Queue for >100 codes)
 - `GET /admin/book-codes` — list with filters (status, date range)
@@ -320,6 +336,7 @@ wrong_attempts   INTEGER NOT NULL DEFAULT 0
 - `GET /admin/book-codes/export` — generates CSV to R2, returns presigned URL
 
 **Edge case handling:**
+
 - Code generation: UUIDv4-based, normalized uppercase, UNIQUE constraint in D1
 - Collision: Catch unique constraint error, retry with new code (max 3 retries, log if fails)
 - Bulk >100: Offload to Cloudflare Queue; Worker processes in batches of 50 with transactions
@@ -332,6 +349,7 @@ wrong_attempts   INTEGER NOT NULL DEFAULT 0
 **Admin endpoints:** Full CRUD + list with search
 
 **Edge case handling:**
+
 - Delete blocked if units reference this exam type (return 409 with count of linked units)
 - Name: UNIQUE constraint in D1
 - `exam_question_count`: Required on create, defaults to 10, minimum 1
@@ -341,6 +359,7 @@ wrong_attempts   INTEGER NOT NULL DEFAULT 0
 **Admin endpoints:** Full CRUD + image upload + filter by exam type
 
 **File upload flow:**
+
 1. Client requests presigned R2 upload URL from Worker
 2. Client uploads directly to R2
 3. Client sends `image_key` to Worker to create unit record
@@ -348,6 +367,7 @@ wrong_attempts   INTEGER NOT NULL DEFAULT 0
 5. On D1 failure: Worker deletes R2 object
 
 **Edge case handling:**
+
 - Delete blocked if student progress exists for any question in this unit
 - Delete blocked if unit has questions (must delete questions first, or cascade soft-delete)
 - `access_type` change free → premium: Applies to new requests only; students mid-unit continue (grandfathering)
@@ -358,6 +378,7 @@ wrong_attempts   INTEGER NOT NULL DEFAULT 0
 **Admin endpoints:** Full CRUD + audio upload + reorder
 
 **Edge case handling:**
+
 - Delete blocked if `student_question_progress` rows exist for question
 - Before delete: require admin to reassign `sequence_order` to close gaps
 - `correct_answer` validated by Zod in shared schema (must equal one of option1–4)
@@ -370,6 +391,7 @@ wrong_attempts   INTEGER NOT NULL DEFAULT 0
 **Admin endpoints:** Full CRUD + filter by difficulty + filter by unit
 
 **Edge case handling:**
+
 - Delete blocked if `status = 'active'` exam references question
 - Soft-delete used for questions with historical answers
 - Admin warned (not blocked) if fewer questions exist than `exam_question_count` for a given unit+difficulty
@@ -377,9 +399,11 @@ wrong_attempts   INTEGER NOT NULL DEFAULT 0
 ### 4.8 Learning Progress
 
 **Endpoint:**
+
 - `POST /student/progress` — `{ question_id, answer }` → upsert progress record
 
 **Edge case handling:**
+
 - Idempotent: `INSERT OR IGNORE INTO student_question_progress` — double-submits safe
 - Sequential gate: Server checks previous question is answered before accepting
 - Membership revoked mid-unit: Premium questions return 403; free questions continue
@@ -387,15 +411,18 @@ wrong_attempts   INTEGER NOT NULL DEFAULT 0
 ### 4.9 Exam System
 
 **Endpoints:**
+
 - `POST /student/exams` — create exam (checks prerequisites, randomizes questions)
 - `POST /student/exams/:id/submit` — submit answers, calculate score, update analytics
 
 **Exam creation prerequisites (all server-side):**
+
 1. Student membership type is `premium` — exams are premium-only, no exceptions
 2. Student has completed all learning questions in the unit
 3. No existing exam record for `(student_id, unit_id)` — enforced by UNIQUE constraint
 
 **Exam creation logic:**
+
 1. Fetch `exam_question_count` from `exam_types.exam_question_count`
 2. Query `exam_questions WHERE unit_id = ? AND difficulty = ? AND is_deleted = 0`
 3. Return 422 if available questions < `exam_question_count`
@@ -404,6 +431,7 @@ wrong_attempts   INTEGER NOT NULL DEFAULT 0
 6. Insert `student_exam_answers` rows with `selected_answer = NULL`
 
 **Exam submission (single D1 transaction):**
+
 1. Validate exam status = active (reject if already submitted)
 2. Validate each submitted `question_id` belongs to this exam
 3. For each answer: update `selected_answer`, set `is_correct`
@@ -412,6 +440,7 @@ wrong_attempts   INTEGER NOT NULL DEFAULT 0
 6. All of the above in one D1 transaction — all or nothing
 
 **Edge case handling:**
+
 - Double submit: Check `status` before transaction; return 409 if already submitted
 - Extra question IDs: Validate against exam's assigned questions; reject unknown IDs
 - Blank submission: Allowed — treat all unanswered as wrong; score = 0
@@ -429,6 +458,7 @@ wrong_attempts   INTEGER NOT NULL DEFAULT 0
 ### 4.11 Admin Monitoring
 
 **Endpoints:**
+
 - `GET /admin/students` — list with filters: membership, source, is_active; paginated
 - `PATCH /admin/students/:id` — block/unblock, modify membership
 - `GET /admin/students/:id/exams` — exam history
@@ -436,6 +466,7 @@ wrong_attempts   INTEGER NOT NULL DEFAULT 0
 - `GET /admin/analytics/membership` — totals, normal vs premium, QR vs manual
 
 **Edge case handling:**
+
 - Self-block: Middleware checks `target_id !== authenticated_admin_id`; return 403
 - Downgrade mid-exam: Apply membership change; active exam is allowed to complete
 - Delete: Soft-delete only (`is_active = 0`); return 409 on any hard-delete attempt
@@ -448,21 +479,23 @@ wrong_attempts   INTEGER NOT NULL DEFAULT 0
 
 ### 5.1 Middleware Stack (applied in order)
 
-1. **`authMiddleware`** — Verify JWT signature and expiry. Fetch `is_active` from KV (TTL 30s). Reject if `is_active = 0`.
-2. **`rbacMiddleware`** — Check `role` from D1 (not JWT). Reject if role does not match route requirement.
-3. **`membershipMiddleware`** — For content routes, fetch `membership_type` from KV (TTL 30s). Enforce against `access_type` of requested content.
+1. `**authMiddleware`** — Verify JWT signature and expiry. Fetch `is_active` from KV (TTL 30s). Reject if `is_active = 0`.
+2. `**rbacMiddleware**` — Check `role` from D1 (not JWT). Reject if role does not match route requirement.
+3. `**membershipMiddleware**` — For content routes, fetch `membership_type` from KV (TTL 30s). Enforce against `access_type` of requested content.
 
 ### 5.2 Access Matrix
 
-| Route group | Requires | Membership |
-|---|---|---|
-| `/auth/*` | None | — |
-| `/admin/*` | role = admin | — |
-| `/student/register` | None | — |
-| `/student/units` (free) | role = student | normal or premium |
-| `/student/units` (premium) | role = student | premium only |
-| `/student/exams/*` | role = student | premium only |
-| `/student/progress` | role = student | per question access_type |
+
+| Route group                | Requires       | Membership               |
+| -------------------------- | -------------- | ------------------------ |
+| `/auth/*`                  | None           | —                        |
+| `/admin/*`                 | role = admin   | —                        |
+| `/student/register`        | None           | —                        |
+| `/student/units` (free)    | role = student | normal or premium        |
+| `/student/units` (premium) | role = student | premium only             |
+| `/student/exams/*`         | role = student | premium only             |
+| `/student/progress`        | role = student | per question access_type |
+
 
 ### 5.3 KV Cache Keys
 
@@ -488,10 +521,12 @@ wrong_attempts   INTEGER NOT NULL DEFAULT 0
 
 ### 6.2 File Type Allowlists
 
-| Context | Allowed MIME types |
-|---|---|
-| Unit image | `image/jpeg`, `image/png`, `image/webp` |
+
+| Context        | Allowed MIME types                                  |
+| -------------- | --------------------------------------------------- |
+| Unit image     | `image/jpeg`, `image/png`, `image/webp`             |
 | Question audio | `audio/mpeg`, `audio/mp4`, `audio/ogg`, `audio/wav` |
+
 
 ### 6.3 Filename Safety
 
@@ -502,38 +537,43 @@ Sanitization: strip non-alphanumeric except `.` and `-`; lowercase; max 100 char
 
 ## 7. Security Requirements
 
-| Requirement | Implementation |
-|---|---|
-| Password storage | bcrypt via Web Crypto (cost factor 12) |
-| JWT algorithm | HS256 with Worker secret; `alg:none` explicitly rejected |
-| Role enforcement | Fetched from D1 on every admin request — never from JWT claim |
-| Membership enforcement | Fetched from KV (TTL 30s) — never from JWT claim |
-| Input validation | Zod schemas in shared package, applied in Hono middleware |
-| HTML sanitization | Allowlist-based sanitizer in Worker before D1 insert |
-| Rate limiting | KV counter per IP+email on `/auth/login`; 5 attempts → 15-min lockout |
-| File validation | MIME type from magic bytes, not file extension |
-| One-time code use | D1 transaction + UNIQUE constraint — never KV for this |
-| Book code format | Uppercase alphanumeric, length 12, UUIDv4-derived |
+
+| Requirement            | Implementation                                                        |
+| ---------------------- | --------------------------------------------------------------------- |
+| Password storage       | bcrypt via Web Crypto (cost factor 12)                                |
+| JWT algorithm          | HS256 with Worker secret; `alg:none` explicitly rejected              |
+| Role enforcement       | Fetched from D1 on every admin request — never from JWT claim         |
+| Membership enforcement | Fetched from KV (TTL 30s) — never from JWT claim                      |
+| Input validation       | Zod schemas in shared package, applied in Hono middleware             |
+| HTML sanitization      | Allowlist-based sanitizer in Worker before D1 insert                  |
+| Rate limiting          | KV counter per IP+email on `/auth/login`; 5 attempts → 15-min lockout |
+| File validation        | MIME type from magic bytes, not file extension                        |
+| One-time code use      | D1 transaction + UNIQUE constraint — never KV for this                |
+| Book code format       | Uppercase alphanumeric, length 12, UUIDv4-derived                     |
+
 
 ---
 
 ## 8. Cloudflare Platform Constraints & Mitigations
 
-| Constraint | Mitigation |
-|---|---|
-| Workers CPU time limit | Bulk code generation (>100) via Cloudflare Queue; batches of 50 per invocation |
-| Workers 128MB memory | Large exports write to R2; paginate all list queries |
-| KV eventual consistency | Never use KV for one-time-use validation; D1 + UNIQUE constraint is source of truth |
-| No Node.js crypto | Use `crypto.subtle` (Web Crypto API) for all crypto; jose for JWT |
-| D1 SQLite limitations | Test all migrations with `wrangler d1 execute --local`; no triggers or PRAGMA changes |
-| D1 write latency | Batch all exam submission writes in single D1 transaction |
-| CORS (two Pages origins) | Worker reads `ADMIN_ORIGIN` + `STUDENT_ORIGIN` from env; allowlists both |
+
+| Constraint               | Mitigation                                                                            |
+| ------------------------ | ------------------------------------------------------------------------------------- |
+| Workers CPU time limit   | Bulk code generation (>100) via Cloudflare Queue; batches of 50 per invocation        |
+| Workers 128MB memory     | Large exports write to R2; paginate all list queries                                  |
+| KV eventual consistency  | Never use KV for one-time-use validation; D1 + UNIQUE constraint is source of truth   |
+| No Node.js crypto        | Use `crypto.subtle` (Web Crypto API) for all crypto; jose for JWT                     |
+| D1 SQLite limitations    | Test all migrations with `wrangler d1 execute --local`; no triggers or PRAGMA changes |
+| D1 write latency         | Batch all exam submission writes in single D1 transaction                             |
+| CORS (two Pages origins) | Worker reads `ADMIN_ORIGIN` + `STUDENT_ORIGIN` from env; allowlists both              |
+
 
 ---
 
 ## 9. Seed Data
 
 On first deploy, a seed script creates:
+
 - One admin user with email from `SEED_ADMIN_EMAIL` env var and password from `SEED_ADMIN_PASSWORD` env var
 - Both env vars are Wrangler secrets (never in source code)
 - Seed script is idempotent: `INSERT OR IGNORE` — safe to re-run
@@ -542,15 +582,18 @@ On first deploy, a seed script creates:
 
 ## 10. Decisions Log
 
-| Decision | Choice | Rationale |
-|---|---|---|
-| Learning completion trigger | Any answer (right or wrong) | Keeps progression fluid; exam tests knowledge, not learning questions |
-| Exam question count | Admin-configured per exam type | Different exams have different lengths; not hardcoded |
-| Exam retakes | Not allowed | One attempt enforced by UNIQUE(student_id, unit_id); encourages preparation |
-| First admin | Seed data via Wrangler secrets | Clean, auditable, no special registration endpoint needed |
-| Role in JWT | Not stored | Prevents stale-claim privilege escalation |
-| Membership in JWT | Not stored | Prevents stale-claim access to premium content after downgrade |
-| Deletions | Soft-delete throughout | Preserves analytics, exam history, and progress data integrity |
-| Book code race condition | D1 transaction + UNIQUE constraint | KV is eventually consistent and unsafe for one-time validation |
-| Large file uploads | R2 presigned URLs | Workers request body limit is 100MB; presigned pattern bypasses this |
-| Bulk code export | R2 + presigned download URL | Avoids loading large datasets into Worker memory |
+
+| Decision                    | Choice                             | Rationale                                                                   |
+| --------------------------- | ---------------------------------- | --------------------------------------------------------------------------- |
+| Learning completion trigger | Any answer (right or wrong)        | Keeps progression fluid; exam tests knowledge, not learning questions       |
+| Exam question count         | Admin-configured per exam type     | Different exams have different lengths; not hardcoded                       |
+| Exam retakes                | Not allowed                        | One attempt enforced by UNIQUE(student_id, unit_id); encourages preparation |
+| First admin                 | Seed data via Wrangler secrets     | Clean, auditable, no special registration endpoint needed                   |
+| Role in JWT                 | Not stored                         | Prevents stale-claim privilege escalation                                   |
+| Membership in JWT           | Not stored                         | Prevents stale-claim access to premium content after downgrade              |
+| Deletions                   | Soft-delete throughout             | Preserves analytics, exam history, and progress data integrity              |
+| Book code race condition    | D1 transaction + UNIQUE constraint | KV is eventually consistent and unsafe for one-time validation              |
+| Large file uploads          | R2 presigned URLs                  | Workers request body limit is 100MB; presigned pattern bypasses this        |
+| Bulk code export            | R2 + presigned download URL        | Avoids loading large datasets into Worker memory                            |
+
+
