@@ -536,16 +536,16 @@ wrong_attempts   INTEGER NOT NULL DEFAULT 0
 
 1. `**authMiddleware` — Verify JWT signature and expiry. Fetch `is_active` from
    KV (TTL 30s). Reject if `is_active = 0`.
-2. `**rbacMiddleware`\*\* — Check `role` from D1 (not JWT). Reject if role does
-   not match route requirement.
-3. `**membershipMiddleware`\*\* — For content routes, fetch `membership_type`
-   from KV (TTL 30s). Enforce against `access_type` of requested content.
+2. `**rbacMiddleware` — Check `role` from D1 (not JWT). Reject if role does not
+   match route requirement.
+3. `**membershipMiddleware` — For content routes, fetch `membership_type` from
+   KV (TTL 30s). Enforce against `access_type` of requested content.
 
 ### 5.2 Access Matrix
 
 | Route group                | Requires       | Membership               |
 | -------------------------- | -------------- | ------------------------ |
-| `/auth/*`                  | None           | —                        |
+| `/auth/`\*                 | None           | —                        |
 | `/admin/*`                 | role = admin   | —                        |
 | `/student/register`        | None           | —                        |
 | `/student/units` (free)    | role = student | normal or premium        |

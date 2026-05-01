@@ -15,15 +15,6 @@
     "format:check": "prettier --check .",
     "prepare": "husky"
   },
-  "lint-staged": {
-    "*.{ts,tsx,js,jsx,vue}": [
-      "eslint --fix",
-      "prettier --write"
-    ],
-    "*.{json,css,scss,md,yaml,yml,toml}": [
-      "prettier --write"
-    ]
-  },
   "devDependencies": {
     "@commitlint/cli": "^20.5.3",
     "@commitlint/config-conventional": "^20.5.3",

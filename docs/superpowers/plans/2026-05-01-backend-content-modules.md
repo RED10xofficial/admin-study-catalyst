@@ -76,8 +76,7 @@ backend/tests/modules/
 - Create: `shared/src/validators/book-codes.validators.ts`
 - Create: `shared/src/validators/upload.validators.ts`
 - Modify: `shared/src/validators/index.ts`
-
-- [ ] **Step 1: Create shared/src/validators/exam-types.validators.ts**
+- **Step 1: Create shared/src/validators/exam-types.validators.ts**
 
 ```typescript
 import { z } from 'zod';
@@ -100,7 +99,7 @@ export type CreateExamTypeInput = z.infer<typeof createExamTypeSchema>;
 export type UpdateExamTypeInput = z.infer<typeof updateExamTypeSchema>;
 ```
 
-- [ ] **Step 2: Create shared/src/validators/units.validators.ts**
+- **Step 2: Create shared/src/validators/units.validators.ts**
 
 ```typescript
 import { z } from 'zod';
@@ -126,7 +125,7 @@ export type CreateUnitInput = z.infer<typeof createUnitSchema>;
 export type UpdateUnitInput = z.infer<typeof updateUnitSchema>;
 ```
 
-- [ ] **Step 3: Create shared/src/validators/questions.validators.ts**
+- **Step 3: Create shared/src/validators/questions.validators.ts**
 
 ```typescript
 import { z } from 'zod';
@@ -181,7 +180,7 @@ export type CreateQuestionInput = z.infer<typeof createQuestionSchema>;
 export type UpdateQuestionInput = z.infer<typeof updateQuestionSchema>;
 ```
 
-- [ ] **Step 4: Create shared/src/validators/exam-questions.validators.ts**
+- **Step 4: Create shared/src/validators/exam-questions.validators.ts**
 
 ```typescript
 import { z } from 'zod';
@@ -213,7 +212,7 @@ export const examQuestionListSchema = z.object({
 export type CreateExamQuestionInput = z.infer<typeof createExamQuestionSchema>;
 ```
 
-- [ ] **Step 5: Create shared/src/validators/book-codes.validators.ts**
+- **Step 5: Create shared/src/validators/book-codes.validators.ts**
 
 ```typescript
 import { z } from 'zod';
@@ -241,7 +240,7 @@ export type GenerateCodeInput = z.infer<typeof generateCodeSchema>;
 export type BulkGenerateInput = z.infer<typeof bulkGenerateSchema>;
 ```
 
-- [ ] **Step 6: Create shared/src/validators/upload.validators.ts**
+- **Step 6: Create shared/src/validators/upload.validators.ts**
 
 ```typescript
 import { z } from 'zod';
@@ -255,7 +254,7 @@ export const presignSchema = z.object({
 export type PresignInput = z.infer<typeof presignSchema>;
 ```
 
-- [ ] **Step 7: Update shared/src/validators/index.ts**
+- **Step 7: Update shared/src/validators/index.ts**
 
 ```typescript
 export * from './auth.validators';
@@ -267,7 +266,7 @@ export * from './units.validators';
 export * from './upload.validators';
 ```
 
-- [ ] **Step 8: Commit**
+- **Step 8: Commit**
 
 ```bash
 git add -A
@@ -284,8 +283,7 @@ git commit -m "feat(shared): add zod validators for all content modules"
 - Create: `backend/src/modules/exam-types/exam-types.routes.ts`
 - Create: `backend/tests/modules/exam-types.test.ts`
 - Modify: `backend/src/index.ts`
-
-- [ ] **Step 1: Write tests for exam types**
+- **Step 1: Write tests for exam types**
 
 ```typescript
 // backend/tests/modules/exam-types.test.ts
@@ -432,7 +430,7 @@ describe('Exam Types', () => {
 });
 ```
 
-- [ ] **Step 2: Run — confirm tests fail**
+- **Step 2: Run — confirm tests fail**
 
 ```bash
 yarn test tests/modules/exam-types.test.ts
@@ -440,7 +438,7 @@ yarn test tests/modules/exam-types.test.ts
 
 Expected: FAIL — routes not mounted.
 
-- [ ] **Step 3: Create backend/src/modules/exam-types/exam-types.service.ts**
+- **Step 3: Create backend/src/modules/exam-types/exam-types.service.ts**
 
 ```typescript
 import { count, eq, ilike, like } from 'drizzle-orm';
@@ -550,7 +548,7 @@ export async function deleteExamType(db: Db, id: string) {
 }
 ```
 
-- [ ] **Step 4: Create backend/src/modules/exam-types/exam-types.routes.ts**
+- **Step 4: Create backend/src/modules/exam-types/exam-types.routes.ts**
 
 ```typescript
 import { Hono } from 'hono';
@@ -619,7 +617,7 @@ examTypesApp.delete('/:id', async (c) => {
 export { examTypesApp };
 ```
 
-- [ ] **Step 5: Mount in index.ts**
+- **Step 5: Mount in index.ts**
 
 Add to `backend/src/index.ts`:
 
@@ -629,7 +627,7 @@ import { examTypesApp } from './modules/exam-types/exam-types.routes';
 app.route('/admin/exam-types', examTypesApp);
 ```
 
-- [ ] **Step 6: Run tests — confirm pass**
+- **Step 6: Run tests — confirm pass**
 
 ```bash
 yarn test tests/modules/exam-types.test.ts
@@ -637,7 +635,7 @@ yarn test tests/modules/exam-types.test.ts
 
 Expected: 4 passing tests.
 
-- [ ] **Step 7: Commit**
+- **Step 7: Commit**
 
 ```bash
 git add -A
@@ -659,7 +657,7 @@ git commit -m "feat(exam-types): add admin CRUD for exam types with delete guard
 > 2026, Cloudflare R2 bindings support `bucket.createPresignedUrl()` for
 > Workers. Use that.
 
-- [ ] **Step 1: Create backend/src/modules/upload/upload.service.ts**
+- **Step 1: Create backend/src/modules/upload/upload.service.ts**
 
 ```typescript
 import type { R2Bucket } from '@cloudflare/workers-types';
@@ -687,7 +685,7 @@ export async function createPresignedUpload(
 }
 ```
 
-- [ ] **Step 2: Create backend/src/modules/upload/upload.routes.ts**
+- **Step 2: Create backend/src/modules/upload/upload.routes.ts**
 
 ```typescript
 import { Hono } from 'hono';
@@ -718,7 +716,7 @@ uploadApp.post('/presign', zValidator('json', presignSchema), async (c) => {
 export { uploadApp };
 ```
 
-- [ ] **Step 3: Mount in index.ts**
+- **Step 3: Mount in index.ts**
 
 ```typescript
 import { uploadApp } from './modules/upload/upload.routes';
@@ -726,7 +724,7 @@ import { uploadApp } from './modules/upload/upload.routes';
 app.route('/upload', uploadApp);
 ```
 
-- [ ] **Step 4: Commit**
+- **Step 4: Commit**
 
 ```bash
 git add -A
@@ -743,8 +741,7 @@ git commit -m "feat(upload): add r2 presigned url endpoint for unit images and q
 - Create: `backend/src/modules/units/units.routes.ts`
 - Create: `backend/tests/modules/units.test.ts`
 - Modify: `backend/src/index.ts`
-
-- [ ] **Step 1: Write tests for units**
+- **Step 1: Write tests for units**
 
 ```typescript
 // backend/tests/modules/units.test.ts
@@ -898,7 +895,7 @@ describe('Units', () => {
 });
 ```
 
-- [ ] **Step 2: Run — confirm tests fail**
+- **Step 2: Run — confirm tests fail**
 
 ```bash
 yarn test tests/modules/units.test.ts
@@ -906,7 +903,7 @@ yarn test tests/modules/units.test.ts
 
 Expected: FAIL.
 
-- [ ] **Step 3: Create backend/src/modules/units/units.service.ts**
+- **Step 3: Create backend/src/modules/units/units.service.ts**
 
 ```typescript
 import { and, count, eq } from 'drizzle-orm';
@@ -1065,7 +1062,7 @@ export async function deleteUnit(db: Db, id: string) {
 }
 ```
 
-- [ ] **Step 4: Create backend/src/modules/units/units.routes.ts**
+- **Step 4: Create backend/src/modules/units/units.routes.ts**
 
 ```typescript
 import { Hono } from 'hono';
@@ -1128,14 +1125,14 @@ unitsApp.delete('/:id', async (c) => {
 export { unitsApp };
 ```
 
-- [ ] **Step 5: Mount in index.ts**
+- **Step 5: Mount in index.ts**
 
 ```typescript
 import { unitsApp } from './modules/units/units.routes';
 app.route('/admin/units', unitsApp);
 ```
 
-- [ ] **Step 6: Run tests — confirm pass**
+- **Step 6: Run tests — confirm pass**
 
 ```bash
 yarn test tests/modules/units.test.ts
@@ -1143,7 +1140,7 @@ yarn test tests/modules/units.test.ts
 
 Expected: 3 passing tests.
 
-- [ ] **Step 7: Commit**
+- **Step 7: Commit**
 
 ```bash
 git add -A
@@ -1160,8 +1157,7 @@ git commit -m "feat(units): add admin CRUD for units with R2 image support and d
 - Create: `backend/src/modules/questions/questions.routes.ts`
 - Create: `backend/tests/modules/questions.test.ts`
 - Modify: `backend/src/index.ts`
-
-- [ ] **Step 1: Write tests for questions**
+- **Step 1: Write tests for questions**
 
 ```typescript
 // backend/tests/modules/questions.test.ts
@@ -1299,7 +1295,7 @@ describe('Learning Questions', () => {
 });
 ```
 
-- [ ] **Step 2: Create backend/src/modules/questions/questions.service.ts**
+- **Step 2: Create backend/src/modules/questions/questions.service.ts**
 
 ```typescript
 import { and, count, eq } from 'drizzle-orm';
@@ -1477,7 +1473,7 @@ export async function reorderQuestions(
 }
 ```
 
-- [ ] **Step 3: Create backend/src/modules/questions/questions.routes.ts**
+- **Step 3: Create backend/src/modules/questions/questions.routes.ts**
 
 ```typescript
 import { Hono } from 'hono';
@@ -1559,14 +1555,14 @@ questionsApp.patch(
 export { questionsApp };
 ```
 
-- [ ] **Step 4: Mount in index.ts**
+- **Step 4: Mount in index.ts**
 
 ```typescript
 import { questionsApp } from './modules/questions/questions.routes';
 app.route('/admin/questions', questionsApp);
 ```
 
-- [ ] **Step 5: Run tests — confirm pass**
+- **Step 5: Run tests — confirm pass**
 
 ```bash
 yarn test tests/modules/questions.test.ts
@@ -1574,7 +1570,7 @@ yarn test tests/modules/questions.test.ts
 
 Expected: 3 passing tests.
 
-- [ ] **Step 6: Commit**
+- **Step 6: Commit**
 
 ```bash
 git add -A
@@ -1591,8 +1587,7 @@ git commit -m "feat(questions): add admin CRUD for learning questions with HTML 
 - Create: `backend/src/modules/exam-questions/exam-questions.routes.ts`
 - Create: `backend/tests/modules/exam-questions.test.ts`
 - Modify: `backend/src/index.ts`
-
-- [ ] **Step 1: Write tests**
+- **Step 1: Write tests**
 
 ```typescript
 // backend/tests/modules/exam-questions.test.ts
@@ -1750,8 +1745,8 @@ describe('Exam Questions', () => {
 });
 ```
 
-- [ ] **Step 2: Create
-      backend/src/modules/exam-questions/exam-questions.service.ts**
+- **Step 2: Create
+  backend/src/modules/exam-questions/exam-questions.service.ts**
 
 ```typescript
 import { and, count, eq } from 'drizzle-orm';
@@ -1869,8 +1864,7 @@ export async function deleteExamQuestion(db: Db, id: string) {
 }
 ```
 
-- [ ] **Step 3: Create
-      backend/src/modules/exam-questions/exam-questions.routes.ts**
+- **Step 3: Create backend/src/modules/exam-questions/exam-questions.routes.ts**
 
 ```typescript
 import { Hono } from 'hono';
@@ -1948,14 +1942,14 @@ examQuestionsApp.delete('/:id', async (c) => {
 export { examQuestionsApp };
 ```
 
-- [ ] **Step 4: Mount in index.ts**
+- **Step 4: Mount in index.ts**
 
 ```typescript
 import { examQuestionsApp } from './modules/exam-questions/exam-questions.routes';
 app.route('/admin/exam-questions', examQuestionsApp);
 ```
 
-- [ ] **Step 5: Run tests — confirm pass**
+- **Step 5: Run tests — confirm pass**
 
 ```bash
 yarn test tests/modules/exam-questions.test.ts
@@ -1963,7 +1957,7 @@ yarn test tests/modules/exam-questions.test.ts
 
 Expected: 3 passing tests.
 
-- [ ] **Step 6: Commit**
+- **Step 6: Commit**
 
 ```bash
 git add -A
@@ -1986,7 +1980,7 @@ git commit -m "feat(exam-questions): add admin CRUD for exam question bank with 
 > fully implemented. The Queue consumer is a stub that calls the same batch
 > generation logic.
 
-- [ ] **Step 1: Write tests**
+- **Step 1: Write tests**
 
 ```typescript
 // backend/tests/modules/book-codes.test.ts
@@ -2112,7 +2106,7 @@ describe('Book Codes', () => {
 });
 ```
 
-- [ ] **Step 2: Create backend/src/modules/book-codes/book-codes.service.ts**
+- **Step 2: Create backend/src/modules/book-codes/book-codes.service.ts**
 
 ```typescript
 import { and, count, eq } from 'drizzle-orm';
@@ -2268,7 +2262,7 @@ export async function exportCodesToR2(
 }
 ```
 
-- [ ] **Step 3: Create backend/src/modules/book-codes/book-codes.routes.ts**
+- **Step 3: Create backend/src/modules/book-codes/book-codes.routes.ts**
 
 ```typescript
 import { Hono } from 'hono';
@@ -2356,14 +2350,14 @@ bookCodesApp.delete('/:id', async (c) => {
 export { bookCodesApp };
 ```
 
-- [ ] **Step 4: Mount in index.ts**
+- **Step 4: Mount in index.ts**
 
 ```typescript
 import { bookCodesApp } from './modules/book-codes/book-codes.routes';
 app.route('/admin/book-codes', bookCodesApp);
 ```
 
-- [ ] **Step 5: Run tests — confirm pass**
+- **Step 5: Run tests — confirm pass**
 
 ```bash
 yarn test tests/modules/book-codes.test.ts
@@ -2371,7 +2365,7 @@ yarn test tests/modules/book-codes.test.ts
 
 Expected: 4 passing tests.
 
-- [ ] **Step 6: Run all tests**
+- **Step 6: Run all tests**
 
 ```bash
 yarn test
@@ -2379,7 +2373,7 @@ yarn test
 
 Expected: all tests pass.
 
-- [ ] **Step 7: Commit**
+- **Step 7: Commit**
 
 ```bash
 git add -A
@@ -2526,17 +2520,16 @@ Similarly in `questions.service.ts` `createQuestion()`, add the same check for
 
 At this point:
 
-- [ ] All content validators added to shared/
-- [ ] Exam Types: full CRUD, delete guard, unique name
-- [ ] R2 presigned upload: `POST /upload/presign` for unit images and question
-      audio
-- [ ] Units: full CRUD, R2 image lifecycle, soft-delete with progress guard
-- [ ] Learning Questions: full CRUD, R2 audio, HTML sanitize, sequential
-      reorder, delete guard
-- [ ] Exam Question Bank: full CRUD, filter by difficulty/unit, active-exam
-      delete guard
-- [ ] Book Codes: generate single, bulk (batched), export to R2 CSV,
-      block/expire, delete guard
+- All content validators added to shared/
+- Exam Types: full CRUD, delete guard, unique name
+- R2 presigned upload: `POST /upload/presign` for unit images and question audio
+- Units: full CRUD, R2 image lifecycle, soft-delete with progress guard
+- Learning Questions: full CRUD, R2 audio, HTML sanitize, sequential reorder,
+  delete guard
+- Exam Question Bank: full CRUD, filter by difficulty/unit, active-exam delete
+  guard
+- Book Codes: generate single, bulk (batched), export to R2 CSV, block/expire,
+  delete guard
 
 ```bash
 cd backend && yarn test

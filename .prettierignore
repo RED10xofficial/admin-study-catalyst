@@ -1,0 +1,2 @@
+# Prettier has no built-in TOML parser; use editor or taplo for wrangler/config files.
+**/*.toml
