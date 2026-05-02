@@ -1,39 +1,133 @@
 /**
  * OpenAPI 3.0 document for HTTP routes. Keep in sync with handlers in src/modules.
  * For generated specs from Zod, consider migrating to @hono/zod-openapi later.
+ *
+ * Narrative aligns with docs/superpowers/specs/2026-05-01-medical-lms-design.md
+ * (Medical LMS: two Vue build targets, sequential learning, premium exams).
  */
+const apiOverviewMarkdown = [
+  '## Medical LMS API (Study Catalyst)',
+  '',
+  'Backend for a **question-driven** medical exam prep product. **Admin** manages all curriculum; **students** learn in order, unlock by answering, and take **premium-only** simulated exams per unit (no retakes).',
+  '',
+  '### Frontends vs this spec',
+  '- **Student SPA** — use tags *Auth* (session), *Student progress*, *Student exams*, *Student membership*. Send `Authorization: Bearer <access_token>` on protected routes; include cookies for refresh.',
+  '- **Admin SPA** — use *Auth*, *Exam types*, *Units*, *Questions*, *Exam questions*, *Book codes*, *Admin students*, *Admin analytics*, and *Upload* when attaching R2 media.',
+  '',
+  '### Roles (who can call what)',
+  '| Access | Routes |',
+  '|--------|--------|',
+  '| **Public** (no Bearer) | `GET /health`, `POST /auth/register`, `POST /auth/login`, `POST /auth/refresh` (needs refresh cookie), `POST /auth/logout`, `POST /auth/forgot-password`, `POST /auth/reset-password` |',
+  '| **Student** (Bearer + student role) | `GET /auth/me`, `POST /progress`, `GET /progress/unit/{unitId}`, `GET/POST /exams`, `POST /exams/{id}/submit`, `GET /exams/{id}/questions`, `GET /exams/{id}`, `POST /membership/upgrade` |',
+  '| **Admin** (Bearer + admin role) | Full CRUD under `/exam-types`, `/units`, `/questions`, `/exam-questions`, `/book-codes`; `GET/PATCH /students…`, `GET /analytics/*`; `POST /upload/presign` |',
+  '',
+  '### Auth model (why tokens look like this)',
+  '- **Access JWT** (~15m) returned in JSON — keep **in memory** on the client.',
+  '- **Refresh** is an opaque token in **KV**, delivered as **httpOnly** `refresh_token` cookie and **rotated** on each refresh.',
+  '- **Role and membership are not embedded in JWT claims** for authorization; the Worker loads current role/membership from D1/KV so privileges cannot go stale.',
+  '',
+  '### Student journey (recommended call order)',
+  '1. **Onboarding:** `POST /auth/register` (optional `bookCode` for premium at signup) or `POST /auth/login`.',
+  '2. **Shell / routing:** `GET /auth/me` for name, role, membership.',
+  '3. **Learning loop:** Drive UI from question IDs your product surfaces; **`POST /progress`** records any answer (right or wrong) — idempotent; **`422`** if sequential gate fails (previous question not answered). **`GET /progress/unit/{unitId}`** powers progress bars and “unit complete”.',
+  '4. **Premium upgrade after signup:** `POST /membership/upgrade` with 12-char book code.',
+  '5. **Exam simulation (premium):** Requires all learning questions in the unit answered; **`POST /exams`** picks a random subset from the exam bank sized by exam type; **`GET /exams/{id}/questions`** for the attempt UI; **`POST /exams/{id}/submit`** grades and persists analytics. One row per `(student, unit)` — no retakes.',
+  '',
+  '### Admin journey (recommended call order)',
+  '1. **Media:** `POST /upload/presign` → PUT file to R2 → pass returned **key** into unit/question payloads.',
+  '2. **Curriculum:** CRUD **exam types** (defines exam length) → **units** under a type → **learning questions** (`sequence_order` defines unlock order) → **exam bank questions** tagged by difficulty for exams.',
+  '3. **Codes:** Generate/list/export **book codes** for QR/packaging; patch status when blocking unused codes.',
+  '4. **Operations:** **Students** list filters + PATCH membership/active; **Analytics** for membership split and question difficulty/attempt insights.',
+  '',
+  '### Response shape',
+  'All JSON uses `{ status, code, message, data, errors, meta, links }`. Errors use the same envelope with `status: error`.',
+  '',
+  '### Infra',
+  'Worker runs on Cloudflare (Hono). Presign/export need R2-related secrets in env.',
+].join('\n');
+
 export const openApiDocument = {
   openapi: '3.0.3',
   info: {
     title: 'Admin Study Catalyst API',
-    description:
-      'Medical LMS backend (Hono on Cloudflare Workers). Auth uses Bearer access tokens; refresh tokens are httpOnly cookies (`refresh_token`). Student routes require Bearer token and student role; catalog/content CRUD routes require admin role. R2 presigned uploads require S3 API credentials in worker vars.',
+    description: apiOverviewMarkdown,
     version: '0.0.1',
   },
   servers: [{ url: '/', description: 'Current deployment (e.g. http://localhost:8787 in dev)' }],
   tags: [
-    { name: 'Health', description: 'Liveness' },
-    { name: 'Auth', description: 'Registration, session, password reset, current user' },
+    {
+      name: 'Health',
+      description:
+        'Public liveness — load balancers and ops pings. No auth. Does not validate DB connectivity.',
+    },
+    {
+      name: 'Auth',
+      description:
+        'Public registration/login/password flows plus authenticated **`GET /auth/me`**. Shared by **both** SPAs; student vs admin is determined after login via `role` on the user object.',
+    },
     {
       name: 'Student progress',
-      description: 'Student — submit learning answers and unit progress',
+      description:
+        '**Student SPA only.** Sequential learning: submit answers (`POST /progress`) and read per-unit aggregates (`GET /progress/unit/{unitId}`). Backend enforces premium gates per learning question access type.',
     },
-    { name: 'Student exams', description: 'Student — practice exams' },
-    { name: 'Student membership', description: 'Student — premium upgrade via book code' },
-    { name: 'Upload', description: 'R2 presigned URLs (any authenticated user)' },
-    { name: 'Exam types', description: 'Admin — exam catalog CRUD' },
-    { name: 'Units', description: 'Admin — units CRUD' },
-    { name: 'Questions', description: 'Admin — learning (unit) questions' },
-    { name: 'Exam questions', description: 'Admin — exam question bank' },
-    { name: 'Book codes', description: 'Admin — book codes lifecycle' },
-    { name: 'Admin students', description: 'Admin — directory and student exam history' },
-    { name: 'Admin analytics', description: 'Admin — dashboards' },
+    {
+      name: 'Student exams',
+      description:
+        '**Student SPA only; premium membership required.** Timed exam simulation using the exam **bank** (`exam_questions`). Creation checks unit completion and uniqueness per student+unit.',
+    },
+    {
+      name: 'Student membership',
+      description:
+        '**Student SPA.** Upgrade existing normal accounts with a printed/book **QR code** string (`POST /membership/upgrade`). Distinct from premium-at-registration via `/auth/register`.',
+    },
+    {
+      name: 'Upload',
+      description:
+        '**Admin SPA while authoring** (and any authenticated caller): presigned **R2 PUT** URLs for unit hero images and learning-question audio — avoids Worker body limits.',
+    },
+    {
+      name: 'Exam types',
+      description:
+        '**Admin SPA.** Catalog of exam programs (e.g. EMREE). Holds **`exam_question_count`** — how many bank questions are drawn per exam attempt.',
+    },
+    {
+      name: 'Units',
+      description:
+        '**Admin SPA.** Learning modules under an exam type; `access_type` free vs premium gates catalog visibility for normal members.',
+    },
+    {
+      name: 'Questions',
+      description:
+        '**Admin SPA.** Learning (instructional) MCQs tied to a unit. **`sequence_order`** drives unlock order; reorder endpoint maintains contiguous sequencing before deletes.',
+    },
+    {
+      name: 'Exam questions',
+      description:
+        '**Admin SPA.** Separate **exam bank** MCQs with difficulty; pooled when students start exams. Not the same entity as learning questions.',
+    },
+    {
+      name: 'Book codes',
+      description:
+        '**Admin SPA.** Issue physical/digital entitlement codes (QR payload); export CSV via R2 presigned URL for fulfilment.',
+    },
+    {
+      name: 'Admin students',
+      description:
+        '**Admin SPA.** Directory search/filter, manual membership corrections, deactivate accounts (`is_active`), view per-student exam history.',
+    },
+    {
+      name: 'Admin analytics',
+      description:
+        '**Admin SPA.** Aggregate dashboards: membership mix (QR vs manual vs direct) and exam-question performance signals.',
+    },
   ],
   paths: {
     '/health': {
       get: {
         tags: ['Health'],
         summary: 'Health check',
+        description:
+          '**Roles:** Public. **Use case:** uptime probes and student/admin app bootstrap pings. **Why:** Cheap Worker heartbeat without touching D1.',
         responses: {
           '200': {
             description: 'Service is up',
@@ -51,7 +145,7 @@ export const openApiDocument = {
         tags: ['Auth'],
         summary: 'Register a student',
         description:
-          'Creates a student account. Optional `bookCode` upgrades to premium when valid. Unknown JSON fields are ignored. Role cannot be escalated via this API.',
+          '**Roles:** Public → creates **student** only (never admin). **Use case:** Student SPA signup screen; optional QR/book flow when user pastes **bookCode** for immediate premium (same intent as printed codes). **Why:** Single endpoint keeps transactional integrity between user insert + code redemption. Unknown JSON ignored; client-supplied role discarded server-side.',
         requestBody: {
           required: true,
           content: {
@@ -75,7 +169,7 @@ export const openApiDocument = {
         tags: ['Auth'],
         summary: 'Log in',
         description:
-          'Returns a short-lived access token and sets `refresh_token` httpOnly cookie (also returned via Set-Cookie).',
+          '**Roles:** Public. **Use case:** Both SPAs — credentials gate to Bearer workflow + silent refresh cookie. **Why:** Access JWT stays short-lived in memory; refresh stays httpOnly against XSS. KV rate-limit after repeated failures (`429`). Disabled accounts rejected.',
         requestBody: {
           required: true,
           content: {
@@ -105,7 +199,7 @@ export const openApiDocument = {
         tags: ['Auth'],
         summary: 'Rotate refresh token',
         description:
-          'Requires `refresh_token` cookie from login. Returns new access token; cookie is rotated.',
+          '**Roles:** Public endpoint but practically requires prior login cookie. **Use case:** Student + Admin SPAs renew access token without re-entering password. **Why:** Refresh token rotation invalidates stolen cookies quickly — old KV session deleted each call.',
         parameters: [
           {
             name: 'refresh_token',
@@ -134,7 +228,8 @@ export const openApiDocument = {
       post: {
         tags: ['Auth'],
         summary: 'Log out',
-        description: 'Revokes refresh token in KV and clears the cookie.',
+        description:
+          '**Roles:** Public endpoint; accepts cookie when present. **Use case:** Explicit logout UI on either SPA. **Why:** KV refresh mapping deleted so replay stops; cookie cleared client-side.',
         parameters: [
           {
             name: 'refresh_token',
@@ -158,7 +253,7 @@ export const openApiDocument = {
         tags: ['Auth'],
         summary: 'Request password reset',
         description:
-          'Always returns 200 with the same message shape to avoid email enumeration. Sends email via Resend when configured.',
+          '**Roles:** Public. **Use case:** Student + Admin forgot-password screens. **Why:** Uniform success messaging prevents attackers discovering registered emails; token persisted single-use server-side.',
         requestBody: {
           required: true,
           content: {
@@ -180,7 +275,8 @@ export const openApiDocument = {
       post: {
         tags: ['Auth'],
         summary: 'Reset password with token',
-        description: 'Token is delivered out-of-band (email link). Token is single-use.',
+        description:
+          '**Roles:** Public. **Use case:** Deep link from email lands on SPA → submits token + new password. **Why:** Token one-time use closes replay window.',
         requestBody: {
           required: true,
           content: {
@@ -203,6 +299,8 @@ export const openApiDocument = {
         tags: ['Auth'],
         security: [{ BearerAuth: [] }],
         summary: 'Current authenticated user',
+        description:
+          '**Roles:** Any authenticated user (student **or** admin). **Use case:** Hydrate nav/profile, branch routing (`role`), show membership badge on Student SPA. **Why:** JWT intentionally omits stale role/membership — this reads authoritative DB snapshot.',
         responses: {
           '200': {
             description: 'OK',
@@ -219,6 +317,8 @@ export const openApiDocument = {
         tags: ['Student progress'],
         security: [{ BearerAuth: [] }],
         summary: 'Record answer for a learning question',
+        description:
+          '**Roles:** Student. **Use case:** Each time learner submits MCQ answer during unit flow (even wrong attempts advance progression policy). **Why:** Upsert progress enables sequential unlock (`422` when prior sequence unanswered); premium-only rows rejected mid-session if membership lapses.',
         requestBody: {
           required: true,
           content: {
@@ -247,6 +347,8 @@ export const openApiDocument = {
         tags: ['Student progress'],
         security: [{ BearerAuth: [] }],
         summary: 'Progress summary for a unit',
+        description:
+          '**Roles:** Student. **Use case:** Dashboard widgets — answered vs total, disable “Start exam” until complete. **Why:** Lightweight aggregate avoids shipping entire question arrays.',
         parameters: [{ name: 'unitId', in: 'path', required: true, schema: { type: 'string' } }],
         responses: {
           '200': {
@@ -282,6 +384,8 @@ export const openApiDocument = {
         tags: ['Student exams'],
         security: [{ BearerAuth: [] }],
         summary: 'List my exams',
+        description:
+          '**Roles:** Student (premium enforcement at creation time). **Use case:** Student history / scores tab. **Why:** Single endpoint surfaces attempts submitted vs abandoned cron.',
         responses: {
           '200': {
             description: 'OK',
@@ -312,6 +416,8 @@ export const openApiDocument = {
         tags: ['Student exams'],
         security: [{ BearerAuth: [] }],
         summary: 'Start a new exam',
+        description:
+          '**Roles:** Student (**premium**). **Use case:** “Begin assessment” once learning unit finished. **Why:** Draws random subset from exam bank sized by parent exam type; DB uniqueness `(student_id, unit_id)` prevents retakes.',
         requestBody: {
           required: true,
           content: {
@@ -353,6 +459,8 @@ export const openApiDocument = {
         tags: ['Student exams'],
         security: [{ BearerAuth: [] }],
         summary: 'Submit answers for an exam',
+        description:
+          '**Roles:** Student. **Use case:** Final submit bar — sends parallel answers map. **Why:** Atomic grading updates score + analytics counters + locks exam row (`409` double-submit). Blank answers allowed (counted incorrect).',
         parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string' } }],
         requestBody: {
           required: true,
@@ -396,6 +504,8 @@ export const openApiDocument = {
         tags: ['Student exams'],
         security: [{ BearerAuth: [] }],
         summary: 'Questions for an exam (answers omitted)',
+        description:
+          '**Roles:** Student owner of exam row. **Use case:** Render timed exam UI without leaking solutions. **Why:** Separate fetch keeps payloads smaller than stuffing bank inside creation response.',
         parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string' } }],
         responses: {
           '200': {
@@ -432,6 +542,8 @@ export const openApiDocument = {
         tags: ['Student exams'],
         security: [{ BearerAuth: [] }],
         summary: 'Get exam by id',
+        description:
+          '**Roles:** Student owner. **Use case:** Poll row for timer/status between steps. **Why:** Confirms attempt belongs to caller before trusting metadata.',
         parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string' } }],
         responses: {
           '200': {
@@ -466,6 +578,8 @@ export const openApiDocument = {
         tags: ['Student membership'],
         security: [{ BearerAuth: [] }],
         summary: 'Upgrade to premium with a book code',
+        description:
+          '**Roles:** Student already logged in as normal member. **Use case:** Activate printed QR after registration (`POST /auth/register` handles QR-at-signup separately). **Why:** Burns code transactionally + bumps membership source for analytics.',
         requestBody: {
           required: true,
           content: {
@@ -512,7 +626,7 @@ export const openApiDocument = {
         security: [{ BearerAuth: [] }],
         summary: 'Presign R2 upload (unit image or question audio)',
         description:
-          'Returns a time-limited PUT URL and object key. Configure `R2_ACCOUNT_ID`, `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`, `R2_BUCKET_NAME`.',
+          '**Roles:** Authenticated user (typically **Admin SPA** during authoring). **Use case:** Step 1 of media pipeline — PUT bytes straight to R2, then embed returned **key** into `/units` or `/questions`. **Why:** Worker avoids streaming large bodies; MIME allowlists mirror LMS security spec. Requires `R2_ACCOUNT_ID`, `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`, `R2_BUCKET_NAME`.',
         requestBody: {
           required: true,
           content: {
@@ -536,6 +650,8 @@ export const openApiDocument = {
         tags: ['Exam types'],
         security: [{ BearerAuth: [] }],
         summary: 'List exam types',
+        description:
+          '**Roles:** Admin. **Use case:** Exam picker when wiring units + configuring exam draws. **Why:** Pagination + optional search keeps admin grids responsive.',
         parameters: [
           { name: 'search', in: 'query', schema: { type: 'string' } },
           { name: 'page', in: 'query', schema: { type: 'integer', minimum: 1, default: 1 } },
@@ -577,6 +693,8 @@ export const openApiDocument = {
         tags: ['Exam types'],
         security: [{ BearerAuth: [] }],
         summary: 'Create exam type',
+        description:
+          '**Roles:** Admin. **Use case:** Add cert/program bucket before attaching units. **Why:** Persists **`exam_question_count`** controlling how many bank questions compose each attempt.',
         requestBody: {
           required: true,
           content: {
@@ -617,6 +735,8 @@ export const openApiDocument = {
         tags: ['Exam types'],
         security: [{ BearerAuth: [] }],
         summary: 'Get exam type',
+        description:
+          '**Roles:** Admin. **Use case:** Detail drawer / edit forms. **Why:** Canonical record including tags JSON + exam length knob.',
         parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string' } }],
         responses: {
           '200': {
@@ -649,6 +769,8 @@ export const openApiDocument = {
         tags: ['Exam types'],
         security: [{ BearerAuth: [] }],
         summary: 'Update exam type',
+        description:
+          '**Roles:** Admin. **Use case:** Rename exam or tweak question counts/tags mid-cycle. **Why:** Immediate effect on subsequent student exam draws.',
         parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string' } }],
         requestBody: {
           required: true,
@@ -688,7 +810,8 @@ export const openApiDocument = {
         tags: ['Exam types'],
         security: [{ BearerAuth: [] }],
         summary: 'Delete exam type',
-        description: '409 if any units reference this exam type.',
+        description:
+          '**Roles:** Admin. **Use case:** Remove obsolete catalog entries. **Why:** **`409`** when dependent units exist — guarantees referential sanity.',
         parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string' } }],
         responses: {
           '200': {
@@ -709,6 +832,8 @@ export const openApiDocument = {
         tags: ['Units'],
         security: [{ BearerAuth: [] }],
         summary: 'List units',
+        description:
+          '**Roles:** Admin. **Use case:** Curriculum tables filtered by exam type / access tier. **Why:** Powers authoring consoles before drilling into learning questions.',
         parameters: [
           { name: 'examTypeId', in: 'query', schema: { type: 'string' } },
           {
@@ -753,6 +878,8 @@ export const openApiDocument = {
         tags: ['Units'],
         security: [{ BearerAuth: [] }],
         summary: 'Create unit',
+        description:
+          '**Roles:** Admin. **Use case:** After `POST /upload/presign` + PUT to R2, persist hero asset via **imageKey**. **Why:** Worker verifies object existence before insert per LMS media pipeline.',
         requestBody: {
           required: true,
           content: {
@@ -793,6 +920,8 @@ export const openApiDocument = {
         tags: ['Units'],
         security: [{ BearerAuth: [] }],
         summary: 'Get unit',
+        description:
+          '**Roles:** Admin. **Use case:** Detail/edit sheets for sequencing questions. **Why:** Includes metadata student apps gate on (`access_type`).',
         parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string' } }],
         responses: {
           '200': {
@@ -825,6 +954,8 @@ export const openApiDocument = {
         tags: ['Units'],
         security: [{ BearerAuth: [] }],
         summary: 'Update unit',
+        description:
+          '**Roles:** Admin. **Use case:** Swap artwork, move between exam types, change premium flag (future catalogs honor new flag). **Why:** Validates uploaded keys same as create.',
         parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string' } }],
         requestBody: {
           required: true,
@@ -864,7 +995,8 @@ export const openApiDocument = {
         tags: ['Units'],
         security: [{ BearerAuth: [] }],
         summary: 'Soft-delete unit',
-        description: '409 if the unit still has non-deleted learning questions.',
+        description:
+          '**Roles:** Admin. **Use case:** Hide retired modules without shredding analytics. **Why:** **`409`** if undeleted learning questions remain.',
         parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string' } }],
         responses: {
           '200': {
@@ -885,6 +1017,8 @@ export const openApiDocument = {
         tags: ['Questions'],
         security: [{ BearerAuth: [] }],
         summary: 'List learning questions for a unit',
+        description:
+          '**Roles:** Admin. **Use case:** Question bank grids while authoring instructional flow. **Why:** Requires **unitId** — aligns admin navigation with sequential authoring workflow.',
         parameters: [
           {
             name: 'unitId',
@@ -932,6 +1066,8 @@ export const openApiDocument = {
         tags: ['Questions'],
         security: [{ BearerAuth: [] }],
         summary: 'Create learning question',
+        description:
+          '**Roles:** Admin. **Use case:** Append instructional MCQs + optional sanitized HTML explanation / audio key. **Why:** **`sequence_order`** establishes unlock ordering enforced later by `/progress`.',
         requestBody: {
           required: true,
           content: {
@@ -971,6 +1107,8 @@ export const openApiDocument = {
         tags: ['Questions'],
         security: [{ BearerAuth: [] }],
         summary: 'Reorder learning questions',
+        description:
+          '**Roles:** Admin. **Use case:** Drag-drop authoring to fix unlock ladder before deletes. **Why:** LMS requires contiguous sequencing — reorder closes gaps enforced during destructive ops.',
         requestBody: {
           required: true,
           content: {
@@ -997,6 +1135,8 @@ export const openApiDocument = {
         tags: ['Questions'],
         security: [{ BearerAuth: [] }],
         summary: 'Get learning question',
+        description:
+          '**Roles:** Admin preview/editor. **Why:** Fetch authoritative fields including privileged explanation HTML.',
         parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string' } }],
         responses: {
           '200': {
@@ -1029,6 +1169,8 @@ export const openApiDocument = {
         tags: ['Questions'],
         security: [{ BearerAuth: [] }],
         summary: 'Update learning question',
+        description:
+          '**Roles:** Admin. **Use case:** Fix copy, rotate assets, toggle premium-only explanations. **Why:** Keeps instructional stack aligned without deleting progress-heavy rows.',
         parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string' } }],
         requestBody: {
           required: true,
@@ -1068,6 +1210,8 @@ export const openApiDocument = {
         tags: ['Questions'],
         security: [{ BearerAuth: [] }],
         summary: 'Soft-delete learning question',
+        description:
+          '**Roles:** Admin. **Use case:** Retire broken items once reorder closes gaps. **Why:** **`409`** when student progress references row — preserves audit trail.',
         parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string' } }],
         responses: {
           '200': {
@@ -1088,6 +1232,8 @@ export const openApiDocument = {
         tags: ['Exam questions'],
         security: [{ BearerAuth: [] }],
         summary: 'List exam bank questions',
+        description:
+          '**Roles:** Admin. **Use case:** QA dashboards filtering bank pool per unit/difficulty before students draw exams. **Why:** Separate dataset from instructional MCQs.',
         parameters: [
           { name: 'unitId', in: 'query', schema: { type: 'string' } },
           {
@@ -1134,6 +1280,8 @@ export const openApiDocument = {
         tags: ['Exam questions'],
         security: [{ BearerAuth: [] }],
         summary: 'Create exam bank question',
+        description:
+          '**Roles:** Admin. **Use case:** Seed difficulty-balanced pools backing `/exams` random selection. **Why:** Submission analytics update difficulty heuristics downstream.',
         requestBody: {
           required: true,
           content: {
@@ -1175,6 +1323,8 @@ export const openApiDocument = {
         tags: ['Exam questions'],
         security: [{ BearerAuth: [] }],
         summary: 'Get exam bank question',
+        description:
+          '**Roles:** Admin reviewer. **Why:** Full fidelity edit forms including difficulty metadata.',
         parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string' } }],
         responses: {
           '200': {
@@ -1207,6 +1357,8 @@ export const openApiDocument = {
         tags: ['Exam questions'],
         security: [{ BearerAuth: [] }],
         summary: 'Update exam bank question',
+        description:
+          '**Roles:** Admin. **Use case:** Tune stems/options after analytics flag confusing items.',
         parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string' } }],
         requestBody: {
           required: true,
@@ -1248,6 +1400,8 @@ export const openApiDocument = {
         tags: ['Exam questions'],
         security: [{ BearerAuth: [] }],
         summary: 'Delete or soft-delete exam bank question',
+        description:
+          '**Roles:** Admin. **Use case:** Remove compromised items or shrink pools. **Why:** Blocks destructive ops when active exams reference rows (`409`).',
         parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string' } }],
         responses: {
           '200': {
@@ -1268,6 +1422,8 @@ export const openApiDocument = {
         tags: ['Book codes'],
         security: [{ BearerAuth: [] }],
         summary: 'List book codes',
+        description:
+          '**Roles:** Admin fulfilment/support. **Use case:** Paginated ledger with status filters (unused→blocked). **Why:** Operational visibility without exporting CSV.',
         parameters: [
           {
             name: 'status',
@@ -1313,6 +1469,8 @@ export const openApiDocument = {
         tags: ['Book codes'],
         security: [{ BearerAuth: [] }],
         summary: 'Generate one book code',
+        description:
+          '**Roles:** Admin. **Use case:** Issue single entitlement links (`qr_url` pairs with STUDENT_ORIGIN). **Why:** Codes uppercase-normalized + collision-retried server-side.',
         requestBody: {
           content: {
             'application/json': {
@@ -1353,6 +1511,8 @@ export const openApiDocument = {
         tags: ['Book codes'],
         security: [{ BearerAuth: [] }],
         summary: 'Export all book codes as CSV (presigned download URL)',
+        description:
+          '**Roles:** Admin bulk ops. **Use case:** Printer/partner batches — fetch JSON containing short-lived HTTPS URL to CSV in R2. **Why:** Keeps massive datasets off Worker heap.',
         responses: {
           '200': {
             description: 'OK',
@@ -1386,6 +1546,8 @@ export const openApiDocument = {
         tags: ['Book codes'],
         security: [{ BearerAuth: [] }],
         summary: 'Bulk-generate book codes (max 100)',
+        description:
+          '**Roles:** Admin. **Use case:** Campaign launches needing dozens/hundreds of codes quickly. **Why:** Bounded batch protects Worker CPU — split larger jobs client-side.',
         requestBody: {
           required: true,
           content: {
@@ -1425,6 +1587,8 @@ export const openApiDocument = {
         tags: ['Book codes'],
         security: [{ BearerAuth: [] }],
         summary: 'Update book code status',
+        description:
+          '**Roles:** Admin compliance. **Use case:** Block leaked batches or mark expiry states without deleting redeemed codes. **Why:** Keeps immutable ledger while controlling redemption eligibility.',
         parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string' } }],
         requestBody: {
           required: true,
@@ -1464,6 +1628,8 @@ export const openApiDocument = {
         tags: ['Book codes'],
         security: [{ BearerAuth: [] }],
         summary: 'Delete unused book code',
+        description:
+          '**Roles:** Admin clean-up. **Use case:** Remove stray unused codes from typos/tests. **Why:** **`409`** if ever redeemed — preserves audit linkage.',
         parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string' } }],
         responses: {
           '200': {
@@ -1484,6 +1650,8 @@ export const openApiDocument = {
         tags: ['Admin students'],
         security: [{ BearerAuth: [] }],
         summary: 'List students',
+        description:
+          '**Roles:** Admin monitoring. **Use case:** CRM-style filters by membership/source/active flag + paging. **Why:** Keeps operational dashboards authoritative vs KV caches.',
         parameters: [
           {
             name: 'membershipType',
@@ -1540,6 +1708,8 @@ export const openApiDocument = {
         tags: ['Admin students'],
         security: [{ BearerAuth: [] }],
         summary: 'Update student membership or active flag',
+        description:
+          '**Roles:** Admin success/support. **Use case:** Manual premium grants (`membership_source = manual_upgrade`), deactivate abusive accounts. **Why:** KV membership cache invalidated immediately after PATCH.',
         parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string' } }],
         requestBody: {
           required: true,
@@ -1581,6 +1751,8 @@ export const openApiDocument = {
         tags: ['Admin students'],
         security: [{ BearerAuth: [] }],
         summary: 'Exam history for a student',
+        description:
+          '**Roles:** Admin success/academic ops. **Use case:** Drill into attempts/scores when auditing cheating concerns or coaching effectiveness. **Why:** Mirrors `/exams` student view but scoped cross-user.',
         parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string' } }],
         responses: {
           '200': {
@@ -1614,6 +1786,8 @@ export const openApiDocument = {
         tags: ['Admin analytics'],
         security: [{ BearerAuth: [] }],
         summary: 'Membership analytics',
+        description:
+          '**Roles:** Admin leadership dashboards. **Use case:** Snapshot premium penetration vs QR/manual/direct sourcing. **Why:** Derived strictly from durable D1 membership columns.',
         responses: {
           '200': {
             description: 'OK',
@@ -1646,6 +1820,8 @@ export const openApiDocument = {
         tags: ['Admin analytics'],
         security: [{ BearerAuth: [] }],
         summary: 'Question analytics',
+        description:
+          '**Roles:** Admin curriculum QA. **Use case:** Identify hardest exam-bank questions / imbalance across difficulties. **Why:** Powered by aggregated attempts maintained during `/exams/{id}/submit`.',
         responses: {
           '200': {
             description: 'OK',
@@ -1680,7 +1856,8 @@ export const openApiDocument = {
         type: 'http',
         scheme: 'bearer',
         bearerFormat: 'JWT',
-        description: '15-minute access token from /auth/login or /auth/refresh',
+        description:
+          'Short-lived HS256 JWT from POST /auth/login or POST /auth/refresh. Send as Authorization: Bearer <token>. Actual authorization checks student vs admin role from D1/KV — not from decoding claims alone.',
       },
     },
     schemas: {
