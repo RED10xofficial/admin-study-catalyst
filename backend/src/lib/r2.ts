@@ -27,9 +27,11 @@ export function sanitizeFilename(name: string): string {
     .slice(0, 100);
 }
 
+import { nanoid } from 'nanoid';
+
 export function buildR2Key(type: UploadType, filename: string): string {
   const safe = sanitizeFilename(filename);
-  return `${type}/${crypto.randomUUID()}/${safe}`;
+  return `${type}/${nanoid()}/${safe}`;
 }
 
 export async function objectExists(r2: R2Bucket, key: string): Promise<boolean> {

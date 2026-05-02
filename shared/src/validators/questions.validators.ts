@@ -10,7 +10,7 @@ const questionFieldsSchema = z.object({
   description: z.string().optional(),
   audioKey: z.string().optional(),
   mimeType: z.string().optional(),
-  unitId: z.string().uuid(),
+  unitId: z.string(),
   accessType: z.enum(['free', 'premium']).default('free'),
   sequenceOrder: z.number().int().min(0),
 });
@@ -31,11 +31,11 @@ export const createQuestionSchema = questionFieldsSchema.refine(optionsRefinemen
 export const updateQuestionSchema = questionFieldsSchema.partial().omit({ unitId: true });
 
 export const reorderQuestionSchema = z.object({
-  questions: z.array(z.object({ id: z.string().uuid(), sequenceOrder: z.number().int().min(0) })),
+  questions: z.array(z.object({ id: z.string(), sequenceOrder: z.number().int().min(0) })),
 });
 
 export const questionListSchema = z.object({
-  unitId: z.string().uuid(),
+  unitId: z.string(),
   page: z.coerce.number().int().min(1).default(1),
   limit: z.coerce.number().int().min(1).max(100).default(50),
 });

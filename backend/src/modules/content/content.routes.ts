@@ -39,7 +39,7 @@ async function getMembership(c: {
 
 contentApp.get(
   '/units',
-  zValidator('query', z.object({ examTypeId: z.string().uuid().optional() })),
+  zValidator('query', z.object({ examTypeId: z.string().optional() })),
   async (c) => {
     const { examTypeId } = c.req.valid('query');
     const membership = await getMembership(c);

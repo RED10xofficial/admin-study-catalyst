@@ -299,9 +299,7 @@ export const openApiDocument = {
         tags: ['Exam types'],
         security: [{ BearerAuth: [] }],
         summary: 'Get exam type',
-        parameters: [
-          { name: 'id', in: 'path', required: true, schema: { type: 'string', format: 'uuid' } },
-        ],
+        parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string' } }],
         responses: {
           '200': {
             description: 'OK',
@@ -324,9 +322,7 @@ export const openApiDocument = {
         tags: ['Exam types'],
         security: [{ BearerAuth: [] }],
         summary: 'Update exam type',
-        parameters: [
-          { name: 'id', in: 'path', required: true, schema: { type: 'string', format: 'uuid' } },
-        ],
+        parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string' } }],
         requestBody: {
           required: true,
           content: {
@@ -357,9 +353,7 @@ export const openApiDocument = {
         security: [{ BearerAuth: [] }],
         summary: 'Delete exam type',
         description: '409 if any units reference this exam type.',
-        parameters: [
-          { name: 'id', in: 'path', required: true, schema: { type: 'string', format: 'uuid' } },
-        ],
+        parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string' } }],
         responses: {
           '200': {
             description: 'Deleted',
@@ -386,7 +380,7 @@ export const openApiDocument = {
         security: [{ BearerAuth: [] }],
         summary: 'List units',
         parameters: [
-          { name: 'examTypeId', in: 'query', schema: { type: 'string', format: 'uuid' } },
+          { name: 'examTypeId', in: 'query', schema: { type: 'string' } },
           {
             name: 'accessType',
             in: 'query',
@@ -451,9 +445,7 @@ export const openApiDocument = {
         tags: ['Units'],
         security: [{ BearerAuth: [] }],
         summary: 'Get unit',
-        parameters: [
-          { name: 'id', in: 'path', required: true, schema: { type: 'string', format: 'uuid' } },
-        ],
+        parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string' } }],
         responses: {
           '200': {
             description: 'OK',
@@ -476,9 +468,7 @@ export const openApiDocument = {
         tags: ['Units'],
         security: [{ BearerAuth: [] }],
         summary: 'Update unit',
-        parameters: [
-          { name: 'id', in: 'path', required: true, schema: { type: 'string', format: 'uuid' } },
-        ],
+        parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string' } }],
         requestBody: {
           required: true,
           content: {
@@ -509,9 +499,7 @@ export const openApiDocument = {
         security: [{ BearerAuth: [] }],
         summary: 'Soft-delete unit',
         description: '409 if the unit still has non-deleted learning questions.',
-        parameters: [
-          { name: 'id', in: 'path', required: true, schema: { type: 'string', format: 'uuid' } },
-        ],
+        parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string' } }],
         responses: {
           '200': {
             description: 'Marked deleted',
@@ -542,7 +530,7 @@ export const openApiDocument = {
             name: 'unitId',
             in: 'query',
             required: true,
-            schema: { type: 'string', format: 'uuid' },
+            schema: { type: 'string' },
           },
           { name: 'page', in: 'query', schema: { type: 'integer', minimum: 1, default: 1 } },
           {
@@ -635,9 +623,7 @@ export const openApiDocument = {
         tags: ['Questions'],
         security: [{ BearerAuth: [] }],
         summary: 'Get learning question',
-        parameters: [
-          { name: 'id', in: 'path', required: true, schema: { type: 'string', format: 'uuid' } },
-        ],
+        parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string' } }],
         responses: {
           '200': {
             description: 'OK',
@@ -660,9 +646,7 @@ export const openApiDocument = {
         tags: ['Questions'],
         security: [{ BearerAuth: [] }],
         summary: 'Update learning question',
-        parameters: [
-          { name: 'id', in: 'path', required: true, schema: { type: 'string', format: 'uuid' } },
-        ],
+        parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string' } }],
         requestBody: {
           required: true,
           content: {
@@ -692,9 +676,7 @@ export const openApiDocument = {
         tags: ['Questions'],
         security: [{ BearerAuth: [] }],
         summary: 'Soft-delete learning question',
-        parameters: [
-          { name: 'id', in: 'path', required: true, schema: { type: 'string', format: 'uuid' } },
-        ],
+        parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string' } }],
         responses: {
           '200': {
             description: 'OK',
@@ -721,7 +703,7 @@ export const openApiDocument = {
         security: [{ BearerAuth: [] }],
         summary: 'List exam bank questions',
         parameters: [
-          { name: 'unitId', in: 'query', schema: { type: 'string', format: 'uuid' } },
+          { name: 'unitId', in: 'query', schema: { type: 'string' } },
           {
             name: 'difficulty',
             in: 'query',
@@ -787,9 +769,7 @@ export const openApiDocument = {
         tags: ['Exam questions'],
         security: [{ BearerAuth: [] }],
         summary: 'Get exam bank question',
-        parameters: [
-          { name: 'id', in: 'path', required: true, schema: { type: 'string', format: 'uuid' } },
-        ],
+        parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string' } }],
         responses: {
           '200': {
             description: 'OK',
@@ -812,9 +792,7 @@ export const openApiDocument = {
         tags: ['Exam questions'],
         security: [{ BearerAuth: [] }],
         summary: 'Update exam bank question',
-        parameters: [
-          { name: 'id', in: 'path', required: true, schema: { type: 'string', format: 'uuid' } },
-        ],
+        parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string' } }],
         requestBody: {
           required: true,
           content: {
@@ -846,9 +824,7 @@ export const openApiDocument = {
         tags: ['Exam questions'],
         security: [{ BearerAuth: [] }],
         summary: 'Delete or soft-delete exam bank question',
-        parameters: [
-          { name: 'id', in: 'path', required: true, schema: { type: 'string', format: 'uuid' } },
-        ],
+        parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string' } }],
         responses: {
           '200': {
             description: 'OK',
@@ -993,9 +969,7 @@ export const openApiDocument = {
         tags: ['Book codes'],
         security: [{ BearerAuth: [] }],
         summary: 'Update book code status',
-        parameters: [
-          { name: 'id', in: 'path', required: true, schema: { type: 'string', format: 'uuid' } },
-        ],
+        parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string' } }],
         requestBody: {
           required: true,
           content: {
@@ -1025,9 +999,7 @@ export const openApiDocument = {
         tags: ['Book codes'],
         security: [{ BearerAuth: [] }],
         summary: 'Delete unused book code',
-        parameters: [
-          { name: 'id', in: 'path', required: true, schema: { type: 'string', format: 'uuid' } },
-        ],
+        parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string' } }],
         responses: {
           '200': {
             description: 'OK',
@@ -1091,7 +1063,7 @@ export const openApiDocument = {
         type: 'object',
         required: ['id', 'name', 'email', 'role', 'membershipType'],
         properties: {
-          id: { type: 'string', format: 'uuid' },
+          id: { type: 'string' },
           name: { type: 'string' },
           email: { type: 'string', format: 'email' },
           role: { type: 'string', enum: ['admin', 'student'] },
@@ -1177,7 +1149,7 @@ export const openApiDocument = {
         required: ['unitName', 'examTypeId'],
         properties: {
           unitName: { type: 'string', minLength: 1, maxLength: 200 },
-          examTypeId: { type: 'string', format: 'uuid' },
+          examTypeId: { type: 'string' },
           tags: { type: 'array', items: { type: 'string' } },
           accessType: { type: 'string', enum: ['free', 'premium'], default: 'free' },
           imageKey: { type: 'string' },
@@ -1188,7 +1160,7 @@ export const openApiDocument = {
         type: 'object',
         properties: {
           unitName: { type: 'string' },
-          examTypeId: { type: 'string', format: 'uuid' },
+          examTypeId: { type: 'string' },
           tags: { type: 'array', items: { type: 'string' } },
           accessType: { type: 'string', enum: ['free', 'premium'] },
           imageKey: { type: 'string' },
@@ -1217,7 +1189,7 @@ export const openApiDocument = {
           description: { type: 'string' },
           audioKey: { type: 'string' },
           mimeType: { type: 'string' },
-          unitId: { type: 'string', format: 'uuid' },
+          unitId: { type: 'string' },
           accessType: { type: 'string', enum: ['free', 'premium'], default: 'free' },
           sequenceOrder: { type: 'integer', minimum: 0 },
         },
@@ -1248,7 +1220,7 @@ export const openApiDocument = {
               type: 'object',
               required: ['id', 'sequenceOrder'],
               properties: {
-                id: { type: 'string', format: 'uuid' },
+                id: { type: 'string' },
                 sequenceOrder: { type: 'integer', minimum: 0 },
               },
             },
@@ -1276,7 +1248,7 @@ export const openApiDocument = {
           correctAnswer: { type: 'string', minLength: 1 },
           shortDescription: { type: 'string' },
           difficulty: { type: 'string', enum: ['easy', 'medium', 'hard'] },
-          unitId: { type: 'string', format: 'uuid' },
+          unitId: { type: 'string' },
           accessType: { type: 'string', enum: ['free', 'premium'] },
         },
       },

@@ -9,14 +9,14 @@ export const createExamQuestionSchema = z.object({
   correctAnswer: z.string().min(1),
   shortDescription: z.string().optional(),
   difficulty: z.enum(['easy', 'medium', 'hard']),
-  unitId: z.string().uuid(),
+  unitId: z.string(),
   accessType: z.enum(['free', 'premium']).optional(),
 });
 
 export const updateExamQuestionSchema = createExamQuestionSchema.partial().omit({ unitId: true });
 
 export const examQuestionListSchema = z.object({
-  unitId: z.string().uuid().optional(),
+  unitId: z.string().optional(),
   difficulty: z.enum(['easy', 'medium', 'hard']).optional(),
   page: z.coerce.number().int().min(1).default(1),
   limit: z.coerce.number().int().min(1).max(100).default(50),

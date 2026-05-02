@@ -1,7 +1,7 @@
 import { z } from 'zod';
 
 export const submitProgressSchema = z.object({
-  questionId: z.string().uuid(),
+  questionId: z.string(),
   answer: z.string().min(1),
 });
 
