@@ -1,13 +1,16 @@
 import { Hono } from 'hono';
-import { zValidator } from '@hono/zod-validator';
 import { and, eq } from 'drizzle-orm';
 import { studentExams } from '@admin-study-catalyst/shared/schema';
 import { createExamSchema, submitExamSchema } from '@admin-study-catalyst/shared/validators';
+import { EXAM_MESSAGES } from '@admin-study-catalyst/shared/messages';
 import { getDb } from '../../db/client';
 import type { Bindings } from '../../env';
 import { authMiddleware } from '../../middleware/auth';
 import { requireRole } from '../../middleware/rbac';
-import { createExam, submitExam } from './exams.service';
+import { notFound } from '../../lib/errors';
+import { zValidate } from '../../lib/validated';
+import { created, ok } from '../../lib/response';
+import { createExam, getExamQuestions, listExams, submitExam } from './exams.service';
 
 const examsApp = new Hono<{
   Bindings: Bindings;
@@ -16,19 +19,29 @@ const examsApp = new Hono<{
 
 examsApp.use('*', authMiddleware, requireRole('student'));
 
-examsApp.post('/', zValidator('json', createExamSchema), async (c) => {
-  const exam = await createExam(getDb(c.env.DB), c.get('userId'), c.req.valid('json'));
-  return c.json({ exam }, 201);
+examsApp.get('/', async (c) => {
+  const exams = await listExams(getDb(c.env.DB), c.get('userId'));
+  return ok(c, { exams }, EXAM_MESSAGES.LISTED);
 });
 
-examsApp.post('/:id/submit', zValidator('json', submitExamSchema), async (c) => {
+examsApp.post('/', zValidate('json', createExamSchema), async (c) => {
+  const exam = await createExam(getDb(c.env.DB), c.get('userId'), c.req.valid('json'));
+  return created(c, { exam }, EXAM_MESSAGES.CREATED);
+});
+
+examsApp.post('/:id/submit', zValidate('json', submitExamSchema), async (c) => {
   const exam = await submitExam(
     getDb(c.env.DB),
     c.get('userId'),
     c.req.param('id'),
     c.req.valid('json'),
   );
-  return c.json({ exam });
+  return ok(c, { exam }, EXAM_MESSAGES.SUBMITTED);
+});
+
+examsApp.get('/:id/questions', async (c) => {
+  const questions = await getExamQuestions(getDb(c.env.DB), c.get('userId'), c.req.param('id'));
+  return ok(c, { questions }, EXAM_MESSAGES.QUESTIONS_RETRIEVED);
 });
 
 examsApp.get('/:id', async (c) => {
@@ -38,8 +51,8 @@ examsApp.get('/:id', async (c) => {
     .from(studentExams)
     .where(and(eq(studentExams.id, c.req.param('id')), eq(studentExams.studentId, c.get('userId'))))
     .get();
-  if (!exam) return c.json({ error: 'Not found' }, 404);
-  return c.json({ exam });
+  if (!exam) throw notFound('Exam not found');
+  return ok(c, { exam }, EXAM_MESSAGES.RETRIEVED);
 });
 
 export { examsApp };

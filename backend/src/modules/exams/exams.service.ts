@@ -1,4 +1,4 @@
-import { and, eq, inArray } from 'drizzle-orm';
+import { and, desc, eq, inArray } from 'drizzle-orm';
 import {
   examQuestions,
   examTypes,
@@ -266,4 +266,58 @@ export async function submitExam(
   await db.batch(batchOps as [(typeof batchOps)[number], ...(typeof batchOps)[number][]]);
 
   return db.select().from(studentExams).where(eq(studentExams.id, examId)).get();
+}
+
+export async function listExams(db: Db, studentId: string) {
+  return db
+    .select()
+    .from(studentExams)
+    .where(eq(studentExams.studentId, studentId))
+    .orderBy(desc(studentExams.startedAt));
+}
+
+export async function getExamQuestions(db: Db, studentId: string, examId: string) {
+  const exam = await db
+    .select({ id: studentExams.id, studentId: studentExams.studentId })
+    .from(studentExams)
+    .where(and(eq(studentExams.id, examId), eq(studentExams.studentId, studentId)))
+    .get();
+  if (!exam) throw notFound('Exam not found');
+
+  const answers = await db
+    .select({
+      questionId: studentExamAnswers.questionId,
+      selectedAnswer: studentExamAnswers.selectedAnswer,
+      isCorrect: studentExamAnswers.isCorrect,
+    })
+    .from(studentExamAnswers)
+    .where(eq(studentExamAnswers.examId, examId));
+
+  const questionIds = answers.map((a) => a.questionId);
+  if (questionIds.length === 0) return [];
+
+  const questionRows = await db
+    .select({
+      id: examQuestions.id,
+      question: examQuestions.question,
+      option1: examQuestions.option1,
+      option2: examQuestions.option2,
+      option3: examQuestions.option3,
+      option4: examQuestions.option4,
+      shortDescription: examQuestions.shortDescription,
+      difficulty: examQuestions.difficulty,
+    })
+    .from(examQuestions)
+    .where(inArray(examQuestions.id, questionIds));
+
+  const answerMap = new Map(answers.map((a) => [a.questionId, a]));
+
+  return questionRows.map((q) => {
+    const studentAnswer = answerMap.get(q.id);
+    return {
+      ...q,
+      selectedAnswer: studentAnswer?.selectedAnswer ?? null,
+      isCorrect: studentAnswer?.isCorrect ?? false,
+    };
+  });
 }

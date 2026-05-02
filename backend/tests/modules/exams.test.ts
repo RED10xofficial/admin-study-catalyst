@@ -99,7 +99,9 @@ async function setupPremiumStudentWithCompletedUnit() {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ email: 'premium@test.com', password: 'Premium1!' }),
   });
-  const { accessToken } = await loginRes.json<{ accessToken: string }>();
+  const {
+    data: { accessToken },
+  } = await loginRes.json<{ data: { accessToken: string } }>();
   return { studentId, token: accessToken };
 }
 
@@ -109,7 +111,7 @@ describe('Exam System — Creation', () => {
 
   it('creates an exam for a premium student who has completed the unit', async () => {
     const { token } = await setupPremiumStudentWithCompletedUnit();
-    const res = await SELF.fetch('http://localhost/student/exams', {
+    const res = await SELF.fetch('http://localhost/exams', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -119,10 +121,10 @@ describe('Exam System — Creation', () => {
     });
     expect(res.status).toBe(201);
     const body = await res.json<{
-      exam: { status: string; totalQuestions: number };
+      data: { exam: { status: string; totalQuestions: number } };
     }>();
-    expect(body.exam.status).toBe('active');
-    expect(body.exam.totalQuestions).toBe(2);
+    expect(body.data.exam.status).toBe('active');
+    expect(body.data.exam.totalQuestions).toBe(2);
   });
 
   it('blocks exam creation for normal-membership student', async () => {
@@ -162,8 +164,10 @@ describe('Exam System — Creation', () => {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ email: 'normal@test.com', password: 'Normal12!' }),
     });
-    const { accessToken } = await loginRes.json<{ accessToken: string }>();
-    const res = await SELF.fetch('http://localhost/student/exams', {
+    const {
+      data: { accessToken },
+    } = await loginRes.json<{ data: { accessToken: string } }>();
+    const res = await SELF.fetch('http://localhost/exams', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -226,8 +230,10 @@ describe('Exam System — Creation', () => {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ email: 'noprog@test.com', password: 'NoProg12!' }),
     });
-    const { accessToken } = await loginRes.json<{ accessToken: string }>();
-    const res = await SELF.fetch('http://localhost/student/exams', {
+    const {
+      data: { accessToken },
+    } = await loginRes.json<{ data: { accessToken: string } }>();
+    const res = await SELF.fetch('http://localhost/exams', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -245,12 +251,12 @@ describe('Exam System — Creation', () => {
       Authorization: `Bearer ${token}`,
     };
     const body = JSON.stringify({ unitId: TEST_UNIT_ID, difficulty: 'easy' });
-    await SELF.fetch('http://localhost/student/exams', {
+    await SELF.fetch('http://localhost/exams', {
       method: 'POST',
       headers,
       body,
     });
-    const res = await SELF.fetch('http://localhost/student/exams', {
+    const res = await SELF.fetch('http://localhost/exams', {
       method: 'POST',
       headers,
       body,
@@ -267,7 +273,7 @@ describe('Exam System — Submission', () => {
     const { token } = await setupPremiumStudentWithCompletedUnit();
     const db = drizzle(env.DB, { schema });
 
-    const createRes = await SELF.fetch('http://localhost/student/exams', {
+    const createRes = await SELF.fetch('http://localhost/exams', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -275,14 +281,16 @@ describe('Exam System — Submission', () => {
       },
       body: JSON.stringify({ unitId: TEST_UNIT_ID, difficulty: 'easy' }),
     });
-    const { exam } = await createRes.json<{ exam: { id: string } }>();
+    const {
+      data: { exam },
+    } = await createRes.json<{ data: { exam: { id: string } } }>();
 
     const answers = await db
       .select({ questionId: schema.studentExamAnswers.questionId })
       .from(schema.studentExamAnswers)
       .where(eq(schema.studentExamAnswers.examId, exam.id));
 
-    const submitRes = await SELF.fetch(`http://localhost/student/exams/${exam.id}/submit`, {
+    const submitRes = await SELF.fetch(`http://localhost/exams/${exam.id}/submit`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -297,10 +305,10 @@ describe('Exam System — Submission', () => {
     });
     expect(submitRes.status).toBe(200);
     const body = await submitRes.json<{
-      exam: { score: number; status: string };
+      data: { exam: { score: number; status: string } };
     }>();
-    expect(body.exam.status).toBe('submitted');
-    expect(body.exam.score).toBe(100);
+    expect(body.data.exam.status).toBe('submitted');
+    expect(body.data.exam.score).toBe(100);
 
     const stats = await db.select().from(schema.questionStatistics);
     expect(stats.length).toBeGreaterThan(0);
@@ -312,7 +320,7 @@ describe('Exam System — Submission', () => {
     const { token } = await setupPremiumStudentWithCompletedUnit();
     const db = drizzle(env.DB, { schema });
 
-    const createRes = await SELF.fetch('http://localhost/student/exams', {
+    const createRes = await SELF.fetch('http://localhost/exams', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -320,7 +328,9 @@ describe('Exam System — Submission', () => {
       },
       body: JSON.stringify({ unitId: TEST_UNIT_ID, difficulty: 'easy' }),
     });
-    const { exam } = await createRes.json<{ exam: { id: string } }>();
+    const {
+      data: { exam },
+    } = await createRes.json<{ data: { exam: { id: string } } }>();
 
     const answers = await db
       .select({ questionId: schema.studentExamAnswers.questionId })
@@ -338,12 +348,12 @@ describe('Exam System — Submission', () => {
       Authorization: `Bearer ${token}`,
     };
 
-    await SELF.fetch(`http://localhost/student/exams/${exam.id}/submit`, {
+    await SELF.fetch(`http://localhost/exams/${exam.id}/submit`, {
       method: 'POST',
       headers,
       body: payload,
     });
-    const res = await SELF.fetch(`http://localhost/student/exams/${exam.id}/submit`, {
+    const res = await SELF.fetch(`http://localhost/exams/${exam.id}/submit`, {
       method: 'POST',
       headers,
       body: payload,
@@ -353,7 +363,7 @@ describe('Exam System — Submission', () => {
 
   it('rejects answers for question IDs not in the exam', async () => {
     const { token } = await setupPremiumStudentWithCompletedUnit();
-    const createRes = await SELF.fetch('http://localhost/student/exams', {
+    const createRes = await SELF.fetch('http://localhost/exams', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -361,9 +371,11 @@ describe('Exam System — Submission', () => {
       },
       body: JSON.stringify({ unitId: TEST_UNIT_ID, difficulty: 'easy' }),
     });
-    const { exam } = await createRes.json<{ exam: { id: string } }>();
+    const {
+      data: { exam },
+    } = await createRes.json<{ data: { exam: { id: string } } }>();
 
-    const res = await SELF.fetch(`http://localhost/student/exams/${exam.id}/submit`, {
+    const res = await SELF.fetch(`http://localhost/exams/${exam.id}/submit`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -385,7 +397,7 @@ describe('Exam System — Submission', () => {
     const { token } = await setupPremiumStudentWithCompletedUnit();
     const db = drizzle(env.DB, { schema });
 
-    const createRes = await SELF.fetch('http://localhost/student/exams', {
+    const createRes = await SELF.fetch('http://localhost/exams', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -393,13 +405,15 @@ describe('Exam System — Submission', () => {
       },
       body: JSON.stringify({ unitId: TEST_UNIT_ID, difficulty: 'easy' }),
     });
-    const { exam } = await createRes.json<{ exam: { id: string } }>();
+    const {
+      data: { exam },
+    } = await createRes.json<{ data: { exam: { id: string } } }>();
     const assignedAnswers = await db
       .select({ questionId: schema.studentExamAnswers.questionId })
       .from(schema.studentExamAnswers)
       .where(eq(schema.studentExamAnswers.examId, exam.id));
 
-    await SELF.fetch(`http://localhost/student/exams/${exam.id}/submit`, {
+    await SELF.fetch(`http://localhost/exams/${exam.id}/submit`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -421,5 +435,160 @@ describe('Exam System — Submission', () => {
 
     expect(updatedQs.length).toBe(assignedIds.length);
     expect(updatedQs.every((q) => q.difficulty === 'hard')).toBe(true);
+  });
+});
+
+describe('GET /exams — list student exams', () => {
+  beforeEach(resetExamFixtures);
+
+  it('returns an empty list when the student has no exams', async () => {
+    const { token } = await setupPremiumStudentWithCompletedUnit();
+    const res = await SELF.fetch('http://localhost/exams', {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    expect(res.status).toBe(200);
+    const body = await res.json<{ data: { exams: unknown[] } }>();
+    expect(Array.isArray(body.data.exams)).toBe(true);
+    expect(body.data.exams).toHaveLength(0);
+  });
+
+  it('returns created exams for the student, most recent first', async () => {
+    const { token } = await setupPremiumStudentWithCompletedUnit();
+
+    await SELF.fetch('http://localhost/exams', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+      body: JSON.stringify({ unitId: TEST_UNIT_ID, difficulty: 'easy' }),
+    });
+
+    const res = await SELF.fetch('http://localhost/exams', {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    expect(res.status).toBe(200);
+    const body = await res.json<{ data: { exams: { status: string }[] } }>();
+    expect(body.data.exams).toHaveLength(1);
+    expect(body.data.exams[0]?.status).toBe('active');
+  });
+
+  it('returns 401 without a token', async () => {
+    const res = await SELF.fetch('http://localhost/exams');
+    expect(res.status).toBe(401);
+  });
+});
+
+describe('GET /exams/:id/questions — exam paper', () => {
+  beforeEach(resetExamFixtures);
+
+  it('returns questions with options but no correctAnswer for an active exam', async () => {
+    const { token } = await setupPremiumStudentWithCompletedUnit();
+
+    const createRes = await SELF.fetch('http://localhost/exams', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+      body: JSON.stringify({ unitId: TEST_UNIT_ID, difficulty: 'easy' }),
+    });
+    const { data: createData } = await createRes.json<{ data: { exam: { id: string } } }>();
+
+    const res = await SELF.fetch(`http://localhost/exams/${createData.exam.id}/questions`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    expect(res.status).toBe(200);
+    const body = await res.json<{
+      data: {
+        questions: {
+          id: string;
+          question: string;
+          option1: string;
+          option2: string;
+          option3: string;
+          option4: string;
+          selectedAnswer: string | null;
+          isCorrect: boolean;
+        }[];
+      };
+    }>();
+    expect(body.data.questions.length).toBeGreaterThan(0);
+    for (const q of body.data.questions) {
+      expect((q as Record<string, unknown>).correctAnswer).toBeUndefined();
+      expect(q.selectedAnswer).toBeNull();
+    }
+  });
+
+  it('includes selectedAnswer and isCorrect after submission', async () => {
+    const { token } = await setupPremiumStudentWithCompletedUnit();
+    const db = drizzle(env.DB, { schema });
+
+    const createRes = await SELF.fetch('http://localhost/exams', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+      body: JSON.stringify({ unitId: TEST_UNIT_ID, difficulty: 'easy' }),
+    });
+    const { data: createData } = await createRes.json<{ data: { exam: { id: string } } }>();
+
+    const assigned = await db
+      .select({ questionId: schema.studentExamAnswers.questionId })
+      .from(schema.studentExamAnswers)
+      .where(eq(schema.studentExamAnswers.examId, createData.exam.id));
+
+    await SELF.fetch(`http://localhost/exams/${createData.exam.id}/submit`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+      body: JSON.stringify({
+        answers: assigned.map((a) => ({ questionId: a.questionId, selectedAnswer: 'A' })),
+      }),
+    });
+
+    const res = await SELF.fetch(`http://localhost/exams/${createData.exam.id}/questions`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    expect(res.status).toBe(200);
+    const body = await res.json<{
+      data: { questions: { selectedAnswer: string | null; isCorrect: boolean }[] };
+    }>();
+    for (const q of body.data.questions) {
+      expect(q.selectedAnswer).toBe('A');
+      expect((q as Record<string, unknown>).correctAnswer).toBeUndefined();
+    }
+  });
+
+  it('returns 404 when exam belongs to a different student', async () => {
+    const { token } = await setupPremiumStudentWithCompletedUnit();
+    const db = drizzle(env.DB, { schema });
+    const { hashPassword } = await import('../../src/lib/hash');
+
+    const createRes = await SELF.fetch('http://localhost/exams', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+      body: JSON.stringify({ unitId: TEST_UNIT_ID, difficulty: 'easy' }),
+    });
+    const { data: createData } = await createRes.json<{ data: { exam: { id: string } } }>();
+
+    await db.insert(schema.users).values({
+      id: generateId(),
+      name: 'Other',
+      email: 'other@test.com',
+      passwordHash: await hashPassword('Other123!'),
+      role: 'student',
+      membershipType: 'premium',
+      isActive: true,
+      createdAt: now(),
+      updatedAt: now(),
+    });
+    const loginRes = await SELF.fetch('http://localhost/auth/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email: 'other@test.com', password: 'Other123!' }),
+    });
+    const { data: loginData } = await loginRes.json<{ data: { accessToken: string } }>();
+
+    const res = await SELF.fetch(`http://localhost/exams/${createData.exam.id}/questions`, {
+      headers: { Authorization: `Bearer ${loginData.accessToken}` },
+    });
+    expect(res.status).toBe(404);
+  });
+
+  it('returns 401 without a token', async () => {
+    const res = await SELF.fetch('http://localhost/exams/some-id/questions');
+    expect(res.status).toBe(401);
   });
 });
