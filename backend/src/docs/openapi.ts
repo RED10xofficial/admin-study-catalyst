@@ -7,19 +7,27 @@ export const openApiDocument = {
   info: {
     title: 'Admin Study Catalyst API',
     description:
-      'Medical LMS backend (Hono on Cloudflare Workers). Auth uses Bearer access tokens; refresh tokens are httpOnly cookies (`refresh_token`). Content admin routes require admin role. R2 presigned uploads require S3 API credentials in worker vars.',
+      'Medical LMS backend (Hono on Cloudflare Workers). Auth uses Bearer access tokens; refresh tokens are httpOnly cookies (`refresh_token`). Student routes require Bearer token and student role; catalog/content CRUD routes require admin role. R2 presigned uploads require S3 API credentials in worker vars.',
     version: '0.0.1',
   },
   servers: [{ url: '/', description: 'Current deployment (e.g. http://localhost:8787 in dev)' }],
   tags: [
     { name: 'Health', description: 'Liveness' },
-    { name: 'Auth', description: 'Registration, session, password reset' },
+    { name: 'Auth', description: 'Registration, session, password reset, current user' },
+    {
+      name: 'Student progress',
+      description: 'Student — submit learning answers and unit progress',
+    },
+    { name: 'Student exams', description: 'Student — practice exams' },
+    { name: 'Student membership', description: 'Student — premium upgrade via book code' },
     { name: 'Upload', description: 'R2 presigned URLs (any authenticated user)' },
     { name: 'Exam types', description: 'Admin — exam catalog CRUD' },
     { name: 'Units', description: 'Admin — units CRUD' },
     { name: 'Questions', description: 'Admin — learning (unit) questions' },
     { name: 'Exam questions', description: 'Admin — exam question bank' },
     { name: 'Book codes', description: 'Admin — book codes lifecycle' },
+    { name: 'Admin students', description: 'Admin — directory and student exam history' },
+    { name: 'Admin analytics', description: 'Admin — dashboards' },
   ],
   paths: {
     '/health': {
@@ -190,6 +198,314 @@ export const openApiDocument = {
         },
       },
     },
+    '/auth/me': {
+      get: {
+        tags: ['Auth'],
+        security: [{ BearerAuth: [] }],
+        summary: 'Current authenticated user',
+        responses: {
+          '200': {
+            description: 'OK',
+            content: {
+              'application/json': { schema: { $ref: '#/components/schemas/MeResponse' } },
+            },
+          },
+          '401': { $ref: '#/components/responses/Unauthorized' },
+        },
+      },
+    },
+    '/progress': {
+      post: {
+        tags: ['Student progress'],
+        security: [{ BearerAuth: [] }],
+        summary: 'Record answer for a learning question',
+        requestBody: {
+          required: true,
+          content: {
+            'application/json': { schema: { $ref: '#/components/schemas/SubmitProgressRequest' } },
+          },
+        },
+        responses: {
+          '201': {
+            description: 'Progress recorded',
+            content: {
+              'application/json': {
+                schema: { $ref: '#/components/schemas/SubmitProgressResponse' },
+              },
+            },
+          },
+          '400': { $ref: '#/components/responses/BadRequest' },
+          '401': { $ref: '#/components/responses/Unauthorized' },
+          '403': { $ref: '#/components/responses/Forbidden' },
+          '404': { $ref: '#/components/responses/NotFound' },
+          '422': { $ref: '#/components/responses/UnprocessableEntity' },
+        },
+      },
+    },
+    '/progress/unit/{unitId}': {
+      get: {
+        tags: ['Student progress'],
+        security: [{ BearerAuth: [] }],
+        summary: 'Progress summary for a unit',
+        parameters: [{ name: 'unitId', in: 'path', required: true, schema: { type: 'string' } }],
+        responses: {
+          '200': {
+            description: 'OK',
+            content: {
+              'application/json': {
+                schema: {
+                  allOf: [
+                    { $ref: '#/components/schemas/ApiEnvelope' },
+                    {
+                      properties: {
+                        data: {
+                          type: 'object',
+                          required: ['progress'],
+                          properties: {
+                            progress: { $ref: '#/components/schemas/UnitProgressSummary' },
+                          },
+                        },
+                      },
+                    },
+                  ],
+                },
+              },
+            },
+          },
+          '401': { $ref: '#/components/responses/Unauthorized' },
+          '403': { $ref: '#/components/responses/Forbidden' },
+        },
+      },
+    },
+    '/exams': {
+      get: {
+        tags: ['Student exams'],
+        security: [{ BearerAuth: [] }],
+        summary: 'List my exams',
+        responses: {
+          '200': {
+            description: 'OK',
+            content: {
+              'application/json': {
+                schema: {
+                  allOf: [
+                    { $ref: '#/components/schemas/ApiEnvelope' },
+                    {
+                      properties: {
+                        data: {
+                          type: 'object',
+                          required: ['exams'],
+                          properties: { exams: { type: 'array', items: { type: 'object' } } },
+                        },
+                      },
+                    },
+                  ],
+                },
+              },
+            },
+          },
+          '401': { $ref: '#/components/responses/Unauthorized' },
+          '403': { $ref: '#/components/responses/Forbidden' },
+        },
+      },
+      post: {
+        tags: ['Student exams'],
+        security: [{ BearerAuth: [] }],
+        summary: 'Start a new exam',
+        requestBody: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: { $ref: '#/components/schemas/StudentCreateExamRequest' },
+            },
+          },
+        },
+        responses: {
+          '201': {
+            description: 'Exam created',
+            content: {
+              'application/json': {
+                schema: {
+                  allOf: [
+                    { $ref: '#/components/schemas/ApiEnvelope' },
+                    {
+                      properties: {
+                        data: {
+                          type: 'object',
+                          required: ['exam'],
+                          properties: { exam: { type: 'object' } },
+                        },
+                      },
+                    },
+                  ],
+                },
+              },
+            },
+          },
+          '400': { $ref: '#/components/responses/BadRequest' },
+          '401': { $ref: '#/components/responses/Unauthorized' },
+          '403': { $ref: '#/components/responses/Forbidden' },
+        },
+      },
+    },
+    '/exams/{id}/submit': {
+      post: {
+        tags: ['Student exams'],
+        security: [{ BearerAuth: [] }],
+        summary: 'Submit answers for an exam',
+        parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string' } }],
+        requestBody: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: { $ref: '#/components/schemas/StudentSubmitExamRequest' },
+            },
+          },
+        },
+        responses: {
+          '200': {
+            description: 'Graded exam result',
+            content: {
+              'application/json': {
+                schema: {
+                  allOf: [
+                    { $ref: '#/components/schemas/ApiEnvelope' },
+                    {
+                      properties: {
+                        data: {
+                          type: 'object',
+                          required: ['exam'],
+                          properties: { exam: { type: 'object' } },
+                        },
+                      },
+                    },
+                  ],
+                },
+              },
+            },
+          },
+          '400': { $ref: '#/components/responses/BadRequest' },
+          '401': { $ref: '#/components/responses/Unauthorized' },
+          '403': { $ref: '#/components/responses/Forbidden' },
+          '404': { $ref: '#/components/responses/NotFound' },
+        },
+      },
+    },
+    '/exams/{id}/questions': {
+      get: {
+        tags: ['Student exams'],
+        security: [{ BearerAuth: [] }],
+        summary: 'Questions for an exam (answers omitted)',
+        parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string' } }],
+        responses: {
+          '200': {
+            description: 'OK',
+            content: {
+              'application/json': {
+                schema: {
+                  allOf: [
+                    { $ref: '#/components/schemas/ApiEnvelope' },
+                    {
+                      properties: {
+                        data: {
+                          type: 'object',
+                          required: ['questions'],
+                          properties: {
+                            questions: { type: 'array', items: { type: 'object' } },
+                          },
+                        },
+                      },
+                    },
+                  ],
+                },
+              },
+            },
+          },
+          '401': { $ref: '#/components/responses/Unauthorized' },
+          '403': { $ref: '#/components/responses/Forbidden' },
+          '404': { $ref: '#/components/responses/NotFound' },
+        },
+      },
+    },
+    '/exams/{id}': {
+      get: {
+        tags: ['Student exams'],
+        security: [{ BearerAuth: [] }],
+        summary: 'Get exam by id',
+        parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string' } }],
+        responses: {
+          '200': {
+            description: 'OK',
+            content: {
+              'application/json': {
+                schema: {
+                  allOf: [
+                    { $ref: '#/components/schemas/ApiEnvelope' },
+                    {
+                      properties: {
+                        data: {
+                          type: 'object',
+                          required: ['exam'],
+                          properties: { exam: { type: 'object' } },
+                        },
+                      },
+                    },
+                  ],
+                },
+              },
+            },
+          },
+          '401': { $ref: '#/components/responses/Unauthorized' },
+          '403': { $ref: '#/components/responses/Forbidden' },
+          '404': { $ref: '#/components/responses/NotFound' },
+        },
+      },
+    },
+    '/membership/upgrade': {
+      post: {
+        tags: ['Student membership'],
+        security: [{ BearerAuth: [] }],
+        summary: 'Upgrade to premium with a book code',
+        requestBody: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: { $ref: '#/components/schemas/MembershipUpgradeRequest' },
+            },
+          },
+        },
+        responses: {
+          '200': {
+            description: 'OK',
+            content: {
+              'application/json': {
+                schema: {
+                  allOf: [
+                    { $ref: '#/components/schemas/ApiEnvelope' },
+                    {
+                      properties: {
+                        data: {
+                          type: 'object',
+                          required: ['success', 'membershipType'],
+                          properties: {
+                            success: { type: 'boolean', example: true },
+                            membershipType: { type: 'string', enum: ['premium'] },
+                          },
+                        },
+                      },
+                    },
+                  ],
+                },
+              },
+            },
+          },
+          '400': { $ref: '#/components/responses/BadRequest' },
+          '401': { $ref: '#/components/responses/Unauthorized' },
+          '403': { $ref: '#/components/responses/Forbidden' },
+          '409': { $ref: '#/components/responses/Conflict' },
+        },
+      },
+    },
     '/upload/presign': {
       post: {
         tags: ['Upload'],
@@ -215,7 +531,7 @@ export const openApiDocument = {
         },
       },
     },
-    '/admin/exam-types': {
+    '/exam-types': {
       get: {
         tags: ['Exam types'],
         security: [{ BearerAuth: [] }],
@@ -296,7 +612,7 @@ export const openApiDocument = {
         },
       },
     },
-    '/admin/exam-types/{id}': {
+    '/exam-types/{id}': {
       get: {
         tags: ['Exam types'],
         security: [{ BearerAuth: [] }],
@@ -388,7 +704,7 @@ export const openApiDocument = {
         },
       },
     },
-    '/admin/units': {
+    '/units': {
       get: {
         tags: ['Units'],
         security: [{ BearerAuth: [] }],
@@ -472,7 +788,7 @@ export const openApiDocument = {
         },
       },
     },
-    '/admin/units/{id}': {
+    '/units/{id}': {
       get: {
         tags: ['Units'],
         security: [{ BearerAuth: [] }],
@@ -564,7 +880,7 @@ export const openApiDocument = {
         },
       },
     },
-    '/admin/questions': {
+    '/questions': {
       get: {
         tags: ['Questions'],
         security: [{ BearerAuth: [] }],
@@ -650,7 +966,7 @@ export const openApiDocument = {
         },
       },
     },
-    '/admin/questions/reorder': {
+    '/questions/reorder': {
       patch: {
         tags: ['Questions'],
         security: [{ BearerAuth: [] }],
@@ -676,7 +992,7 @@ export const openApiDocument = {
         },
       },
     },
-    '/admin/questions/{id}': {
+    '/questions/{id}': {
       get: {
         tags: ['Questions'],
         security: [{ BearerAuth: [] }],
@@ -767,7 +1083,7 @@ export const openApiDocument = {
         },
       },
     },
-    '/admin/exam-questions': {
+    '/exam-questions': {
       get: {
         tags: ['Exam questions'],
         security: [{ BearerAuth: [] }],
@@ -854,7 +1170,7 @@ export const openApiDocument = {
         },
       },
     },
-    '/admin/exam-questions/{id}': {
+    '/exam-questions/{id}': {
       get: {
         tags: ['Exam questions'],
         security: [{ BearerAuth: [] }],
@@ -947,7 +1263,7 @@ export const openApiDocument = {
         },
       },
     },
-    '/admin/book-codes': {
+    '/book-codes': {
       get: {
         tags: ['Book codes'],
         security: [{ BearerAuth: [] }],
@@ -1032,7 +1348,7 @@ export const openApiDocument = {
         },
       },
     },
-    '/admin/book-codes/export': {
+    '/book-codes/export': {
       get: {
         tags: ['Book codes'],
         security: [{ BearerAuth: [] }],
@@ -1065,7 +1381,7 @@ export const openApiDocument = {
         },
       },
     },
-    '/admin/book-codes/bulk': {
+    '/book-codes/bulk': {
       post: {
         tags: ['Book codes'],
         security: [{ BearerAuth: [] }],
@@ -1104,7 +1420,7 @@ export const openApiDocument = {
         },
       },
     },
-    '/admin/book-codes/{id}': {
+    '/book-codes/{id}': {
       patch: {
         tags: ['Book codes'],
         security: [{ BearerAuth: [] }],
@@ -1160,6 +1476,200 @@ export const openApiDocument = {
           '403': { $ref: '#/components/responses/Forbidden' },
           '404': { $ref: '#/components/responses/NotFound' },
           '409': { $ref: '#/components/responses/Conflict' },
+        },
+      },
+    },
+    '/students': {
+      get: {
+        tags: ['Admin students'],
+        security: [{ BearerAuth: [] }],
+        summary: 'List students',
+        parameters: [
+          {
+            name: 'membershipType',
+            in: 'query',
+            schema: { type: 'string', enum: ['normal', 'premium'] },
+          },
+          {
+            name: 'membershipSource',
+            in: 'query',
+            schema: {
+              type: 'string',
+              enum: ['direct_registration', 'book_qr', 'manual_upgrade'],
+            },
+          },
+          { name: 'isActive', in: 'query', schema: { type: 'boolean' } },
+          { name: 'page', in: 'query', schema: { type: 'integer', minimum: 1, default: 1 } },
+          {
+            name: 'limit',
+            in: 'query',
+            schema: { type: 'integer', minimum: 1, maximum: 100, default: 20 },
+          },
+        ],
+        responses: {
+          '200': {
+            description: 'OK',
+            content: {
+              'application/json': {
+                schema: {
+                  allOf: [
+                    { $ref: '#/components/schemas/ApiEnvelope' },
+                    {
+                      properties: {
+                        data: {
+                          type: 'object',
+                          required: ['students'],
+                          properties: {
+                            students: { type: 'array', items: { type: 'object' } },
+                          },
+                        },
+                      },
+                    },
+                  ],
+                },
+              },
+            },
+          },
+          '401': { $ref: '#/components/responses/Unauthorized' },
+          '403': { $ref: '#/components/responses/Forbidden' },
+        },
+      },
+    },
+    '/students/{id}': {
+      patch: {
+        tags: ['Admin students'],
+        security: [{ BearerAuth: [] }],
+        summary: 'Update student membership or active flag',
+        parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string' } }],
+        requestBody: {
+          required: true,
+          content: {
+            'application/json': { schema: { $ref: '#/components/schemas/UpdateStudentRequest' } },
+          },
+        },
+        responses: {
+          '200': {
+            description: 'OK',
+            content: {
+              'application/json': {
+                schema: {
+                  allOf: [
+                    { $ref: '#/components/schemas/ApiEnvelope' },
+                    {
+                      properties: {
+                        data: {
+                          type: 'object',
+                          required: ['student'],
+                          properties: { student: { type: 'object' } },
+                        },
+                      },
+                    },
+                  ],
+                },
+              },
+            },
+          },
+          '400': { $ref: '#/components/responses/BadRequest' },
+          '401': { $ref: '#/components/responses/Unauthorized' },
+          '403': { $ref: '#/components/responses/Forbidden' },
+          '404': { $ref: '#/components/responses/NotFound' },
+        },
+      },
+    },
+    '/students/{id}/exams': {
+      get: {
+        tags: ['Admin students'],
+        security: [{ BearerAuth: [] }],
+        summary: 'Exam history for a student',
+        parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string' } }],
+        responses: {
+          '200': {
+            description: 'OK',
+            content: {
+              'application/json': {
+                schema: {
+                  allOf: [
+                    { $ref: '#/components/schemas/ApiEnvelope' },
+                    {
+                      properties: {
+                        data: {
+                          type: 'object',
+                          required: ['exams'],
+                          properties: { exams: { type: 'array', items: { type: 'object' } } },
+                        },
+                      },
+                    },
+                  ],
+                },
+              },
+            },
+          },
+          '401': { $ref: '#/components/responses/Unauthorized' },
+          '403': { $ref: '#/components/responses/Forbidden' },
+        },
+      },
+    },
+    '/analytics/membership': {
+      get: {
+        tags: ['Admin analytics'],
+        security: [{ BearerAuth: [] }],
+        summary: 'Membership analytics',
+        responses: {
+          '200': {
+            description: 'OK',
+            content: {
+              'application/json': {
+                schema: {
+                  allOf: [
+                    { $ref: '#/components/schemas/ApiEnvelope' },
+                    {
+                      properties: {
+                        data: {
+                          type: 'object',
+                          required: ['analytics'],
+                          properties: { analytics: { type: 'object' } },
+                        },
+                      },
+                    },
+                  ],
+                },
+              },
+            },
+          },
+          '401': { $ref: '#/components/responses/Unauthorized' },
+          '403': { $ref: '#/components/responses/Forbidden' },
+        },
+      },
+    },
+    '/analytics/questions': {
+      get: {
+        tags: ['Admin analytics'],
+        security: [{ BearerAuth: [] }],
+        summary: 'Question analytics',
+        responses: {
+          '200': {
+            description: 'OK',
+            content: {
+              'application/json': {
+                schema: {
+                  allOf: [
+                    { $ref: '#/components/schemas/ApiEnvelope' },
+                    {
+                      properties: {
+                        data: {
+                          type: 'object',
+                          required: ['analytics'],
+                          properties: { analytics: { type: 'object' } },
+                        },
+                      },
+                    },
+                  ],
+                },
+              },
+            },
+          },
+          '401': { $ref: '#/components/responses/Unauthorized' },
+          '403': { $ref: '#/components/responses/Forbidden' },
         },
       },
     },
@@ -1347,6 +1857,95 @@ export const openApiDocument = {
             minLength: 8,
             description: 'Must include uppercase, digit, and special character',
           },
+        },
+      },
+      MeResponse: {
+        allOf: [
+          { $ref: '#/components/schemas/ApiEnvelope' },
+          {
+            properties: {
+              message: { type: 'string', example: 'User retrieved successfully.' },
+              data: {
+                type: 'object',
+                required: ['user'],
+                properties: { user: { $ref: '#/components/schemas/UserPublic' } },
+              },
+            },
+          },
+        ],
+      },
+      SubmitProgressRequest: {
+        type: 'object',
+        required: ['questionId', 'answer'],
+        properties: {
+          questionId: { type: 'string' },
+          answer: { type: 'string', minLength: 1 },
+        },
+      },
+      SubmitProgressResponse: {
+        allOf: [
+          { $ref: '#/components/schemas/ApiEnvelope' },
+          {
+            properties: {
+              code: { type: 'integer', example: 201 },
+              message: { type: 'string' },
+              data: {
+                type: 'object',
+                required: ['success'],
+                properties: { success: { type: 'boolean', example: true } },
+              },
+            },
+          },
+        ],
+      },
+      UnitProgressSummary: {
+        type: 'object',
+        required: ['unitId', 'totalQuestions', 'answeredCount', 'isComplete'],
+        properties: {
+          unitId: { type: 'string' },
+          totalQuestions: { type: 'integer', minimum: 0 },
+          answeredCount: { type: 'integer', minimum: 0 },
+          isComplete: { type: 'boolean' },
+        },
+      },
+      StudentCreateExamRequest: {
+        type: 'object',
+        required: ['unitId', 'difficulty'],
+        properties: {
+          unitId: { type: 'string' },
+          difficulty: { type: 'string', enum: ['easy', 'medium', 'hard'] },
+        },
+      },
+      StudentSubmitExamRequest: {
+        type: 'object',
+        required: ['answers'],
+        properties: {
+          answers: {
+            type: 'array',
+            items: {
+              type: 'object',
+              required: ['questionId', 'selectedAnswer'],
+              properties: {
+                questionId: { type: 'string' },
+                selectedAnswer: { type: 'string', nullable: true },
+              },
+            },
+          },
+        },
+      },
+      MembershipUpgradeRequest: {
+        type: 'object',
+        required: ['bookCode'],
+        properties: {
+          bookCode: { type: 'string', minLength: 12, maxLength: 12 },
+        },
+      },
+      UpdateStudentRequest: {
+        type: 'object',
+        properties: {
+          isActive: { type: 'boolean' },
+          membershipType: { type: 'string', enum: ['normal', 'premium'] },
+          membershipSource: { type: 'string', enum: ['manual_upgrade'] },
         },
       },
       // ── Upload ─────────────────────────────────────────────────────────────
@@ -1570,6 +2169,12 @@ export const openApiDocument = {
       },
       Conflict: {
         description: 'Conflict (e.g. email already registered)',
+        content: {
+          'application/json': { schema: { $ref: '#/components/schemas/ApiErrorEnvelope' } },
+        },
+      },
+      UnprocessableEntity: {
+        description: 'Business rule violation (e.g. sequential question gate)',
         content: {
           'application/json': { schema: { $ref: '#/components/schemas/ApiErrorEnvelope' } },
         },
