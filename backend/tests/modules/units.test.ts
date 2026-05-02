@@ -26,11 +26,11 @@ async function getAdminToken(): Promise<string> {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ email: 'admin@test.com', password: 'Admin123!' }),
   });
-  return (await res.json<{ accessToken: string }>()).accessToken;
+  return (await res.json<{ data: { accessToken: string } }>()).data.accessToken;
 }
 
 async function createExamType(token: string): Promise<string> {
-  const res = await SELF.fetch('http://localhost/admin/exam-types', {
+  const res = await SELF.fetch('http://localhost/exam-types', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -38,7 +38,7 @@ async function createExamType(token: string): Promise<string> {
     },
     body: JSON.stringify({ examName: 'Test Exam', examQuestionCount: 5 }),
   });
-  return (await res.json<{ examType: { id: string } }>()).examType.id;
+  return (await res.json<{ data: { examType: { id: string } } }>()).data.examType.id;
 }
 
 describe('Units', () => {
@@ -54,7 +54,7 @@ describe('Units', () => {
   });
 
   it('creates a unit', async () => {
-    const res = await SELF.fetch('http://localhost/admin/units', {
+    const res = await SELF.fetch('http://localhost/units', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -67,12 +67,12 @@ describe('Units', () => {
       }),
     });
     expect(res.status).toBe(201);
-    const body = await res.json<{ unit: { unitName: string } }>();
-    expect(body.unit.unitName).toBe('Anatomy 101');
+    const body = await res.json<{ data: { unit: { unitName: string } } }>();
+    expect(body.data.unit.unitName).toBe('Anatomy 101');
   });
 
   it('soft-deletes a unit', async () => {
-    const createRes = await SELF.fetch('http://localhost/admin/units', {
+    const createRes = await SELF.fetch('http://localhost/units', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -84,24 +84,28 @@ describe('Units', () => {
         accessType: 'free',
       }),
     });
-    const { unit } = await createRes.json<{ unit: { id: string } }>();
+    const {
+      data: { unit },
+    } = await createRes.json<{ data: { unit: { id: string } } }>();
 
-    const delRes = await SELF.fetch(`http://localhost/admin/units/${unit.id}`, {
+    const delRes = await SELF.fetch(`http://localhost/units/${unit.id}`, {
       method: 'DELETE',
       headers: { Authorization: `Bearer ${token}` },
     });
     expect(delRes.status).toBe(200);
 
-    const listRes = await SELF.fetch('http://localhost/admin/units', {
+    const listRes = await SELF.fetch('http://localhost/units', {
       headers: { Authorization: `Bearer ${token}` },
     });
-    const { units } = await listRes.json<{ units: { id: string }[] }>();
+    const {
+      data: { units },
+    } = await listRes.json<{ data: { units: { id: string }[] } }>();
     expect(units.find((u) => u.id === unit.id)).toBeUndefined();
   });
 
   it('blocks delete when student progress exists', async () => {
     const db = drizzle(env.DB, { schema });
-    const createRes = await SELF.fetch('http://localhost/admin/units', {
+    const createRes = await SELF.fetch('http://localhost/units', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -113,7 +117,9 @@ describe('Units', () => {
         accessType: 'free',
       }),
     });
-    const { unit } = await createRes.json<{ unit: { id: string } }>();
+    const {
+      data: { unit },
+    } = await createRes.json<{ data: { unit: { id: string } } }>();
 
     const qId = generateId();
     await db.insert(schema.questions).values({
@@ -138,7 +144,7 @@ describe('Units', () => {
       answeredAt: now(),
     });
 
-    const delRes = await SELF.fetch(`http://localhost/admin/units/${unit.id}`, {
+    const delRes = await SELF.fetch(`http://localhost/units/${unit.id}`, {
       method: 'DELETE',
       headers: { Authorization: `Bearer ${token}` },
     });
@@ -147,7 +153,7 @@ describe('Units', () => {
 
   it('blocks delete when unit has non-deleted questions (even without student progress)', async () => {
     const db = drizzle(env.DB, { schema });
-    const createRes = await SELF.fetch('http://localhost/admin/units', {
+    const createRes = await SELF.fetch('http://localhost/units', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -159,7 +165,9 @@ describe('Units', () => {
         accessType: 'free',
       }),
     });
-    const { unit } = await createRes.json<{ unit: { id: string } }>();
+    const {
+      data: { unit },
+    } = await createRes.json<{ data: { unit: { id: string } } }>();
     await db.insert(schema.questions).values({
       id: generateId(),
       question: 'Q?',
@@ -174,7 +182,7 @@ describe('Units', () => {
       isDeleted: false,
       createdAt: now(),
     });
-    const delRes = await SELF.fetch(`http://localhost/admin/units/${unit.id}`, {
+    const delRes = await SELF.fetch(`http://localhost/units/${unit.id}`, {
       method: 'DELETE',
       headers: { Authorization: `Bearer ${token}` },
     });

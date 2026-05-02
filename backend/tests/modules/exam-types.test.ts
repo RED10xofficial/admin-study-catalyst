@@ -27,8 +27,8 @@ async function getAdminToken(): Promise<string> {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ email: 'admin@test.com', password: 'Admin123!' }),
   });
-  const body = await res.json<{ accessToken: string }>();
-  return body.accessToken;
+  const body = await res.json<{ data: { accessToken: string } }>();
+  return body.data.accessToken;
 }
 
 async function clearExamTypes() {
@@ -47,7 +47,7 @@ describe('Exam Types', () => {
   });
 
   it('creates an exam type', async () => {
-    const res = await SELF.fetch('http://localhost/admin/exam-types', {
+    const res = await SELF.fetch('http://localhost/exam-types', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -56,8 +56,8 @@ describe('Exam Types', () => {
       body: JSON.stringify({ examName: 'EMREE 2026', examQuestionCount: 20 }),
     });
     expect(res.status).toBe(201);
-    const body = await res.json<{ examType: { examName: string } }>();
-    expect(body.examType.examName).toBe('EMREE 2026');
+    const body = await res.json<{ data: { examType: { examName: string } } }>();
+    expect(body.data.examType.examName).toBe('EMREE 2026');
   });
 
   it('returns 409 on duplicate name', async () => {
@@ -66,12 +66,12 @@ describe('Exam Types', () => {
       'Content-Type': 'application/json',
       Authorization: `Bearer ${token}`,
     };
-    await SELF.fetch('http://localhost/admin/exam-types', {
+    await SELF.fetch('http://localhost/exam-types', {
       method: 'POST',
       headers,
       body: JSON.stringify(payload),
     });
-    const res = await SELF.fetch('http://localhost/admin/exam-types', {
+    const res = await SELF.fetch('http://localhost/exam-types', {
       method: 'POST',
       headers,
       body: JSON.stringify(payload),
@@ -80,7 +80,7 @@ describe('Exam Types', () => {
   });
 
   it('blocks delete when units are linked', async () => {
-    const res = await SELF.fetch('http://localhost/admin/exam-types', {
+    const res = await SELF.fetch('http://localhost/exam-types', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -88,7 +88,9 @@ describe('Exam Types', () => {
       },
       body: JSON.stringify({ examName: 'Linked', examQuestionCount: 5 }),
     });
-    const { examType } = await res.json<{ examType: { id: string } }>();
+    const {
+      data: { examType },
+    } = await res.json<{ data: { examType: { id: string } } }>();
 
     const db = drizzle(env.DB, { schema });
     const { generateId, now } = await import('../../src/lib/id');
@@ -102,7 +104,7 @@ describe('Exam Types', () => {
       updatedAt: now(),
     });
 
-    const delRes = await SELF.fetch(`http://localhost/admin/exam-types/${examType.id}`, {
+    const delRes = await SELF.fetch(`http://localhost/exam-types/${examType.id}`, {
       method: 'DELETE',
       headers: { Authorization: `Bearer ${token}` },
     });
@@ -127,8 +129,10 @@ describe('Exam Types', () => {
       body: JSON.stringify({ email, password: 'Stu12345!' }),
     });
     expect(loginRes.status).toBe(200);
-    const { accessToken } = await loginRes.json<{ accessToken: string }>();
-    const res = await SELF.fetch('http://localhost/admin/exam-types', {
+    const {
+      data: { accessToken },
+    } = await loginRes.json<{ data: { accessToken: string } }>();
+    const res = await SELF.fetch('http://localhost/exam-types', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

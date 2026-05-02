@@ -39,7 +39,7 @@ async function getAdminToken() {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ email: 'admin@test.com', password: 'Admin123!' }),
   });
-  return (await res.json<{ accessToken: string }>()).accessToken;
+  return (await res.json<{ data: { accessToken: string } }>()).data.accessToken;
 }
 
 describe('Admin — Student Management', () => {
@@ -47,17 +47,17 @@ describe('Admin — Student Management', () => {
 
   it('lists all students', async () => {
     const token = await getAdminToken();
-    const res = await SELF.fetch('http://localhost/admin/students', {
+    const res = await SELF.fetch('http://localhost/students', {
       headers: { Authorization: `Bearer ${token}` },
     });
     expect(res.status).toBe(200);
-    const body = await res.json<{ students: unknown[] }>();
-    expect(Array.isArray(body.students)).toBe(true);
+    const body = await res.json<{ data: { students: unknown[] } }>();
+    expect(Array.isArray(body.data.students)).toBe(true);
   });
 
   it('blocks admin from blocking themselves', async () => {
     const token = await getAdminToken();
-    const res = await SELF.fetch('http://localhost/admin/students/admin-1', {
+    const res = await SELF.fetch('http://localhost/students/admin-1', {
       method: 'PATCH',
       headers: {
         'Content-Type': 'application/json',
@@ -85,7 +85,7 @@ describe('Admin — Student Management', () => {
     });
 
     const token = await getAdminToken();
-    const res = await SELF.fetch(`http://localhost/admin/students/${studentId}`, {
+    const res = await SELF.fetch(`http://localhost/students/${studentId}`, {
       method: 'PATCH',
       headers: {
         'Content-Type': 'application/json',

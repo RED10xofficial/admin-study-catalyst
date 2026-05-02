@@ -1,5 +1,4 @@
 import { Hono } from 'hono';
-import { zValidator } from '@hono/zod-validator';
 import type { Bindings } from '../../env';
 import { getDb } from '../../db/client';
 import { authMiddleware } from '../../middleware/auth';
@@ -9,6 +8,9 @@ import {
   updateExamQuestionSchema,
   examQuestionListSchema,
 } from '@admin-study-catalyst/shared/validators';
+import { EXAM_QUESTION_MESSAGES } from '@admin-study-catalyst/shared/messages';
+import { zValidate } from '../../lib/validated';
+import { created, deleted, ok } from '../../lib/response';
 import {
   createExamQuestion,
   listExamQuestions,
@@ -24,31 +26,36 @@ const examQuestionsApp = new Hono<{
 
 examQuestionsApp.use('*', authMiddleware, requireRole('admin'));
 
-examQuestionsApp.get('/', zValidator('query', examQuestionListSchema), async (c) => {
-  return c.json({
-    examQuestions: await listExamQuestions(getDb(c.env.DB), c.req.valid('query')),
-  });
+examQuestionsApp.get('/', zValidate('query', examQuestionListSchema), async (c) => {
+  return ok(
+    c,
+    { examQuestions: await listExamQuestions(getDb(c.env.DB), c.req.valid('query')) },
+    EXAM_QUESTION_MESSAGES.LISTED,
+  );
 });
 
-examQuestionsApp.post('/', zValidator('json', createExamQuestionSchema), async (c) => {
-  const q = await createExamQuestion(getDb(c.env.DB), c.req.valid('json'));
-  return c.json({ examQuestion: q }, 201);
+examQuestionsApp.post('/', zValidate('json', createExamQuestionSchema), async (c) => {
+  const examQuestion = await createExamQuestion(getDb(c.env.DB), c.req.valid('json'));
+  return created(c, { examQuestion }, EXAM_QUESTION_MESSAGES.CREATED);
 });
 
 examQuestionsApp.get('/:id', async (c) => {
-  return c.json({
-    examQuestion: await getExamQuestion(getDb(c.env.DB), c.req.param('id')),
-  });
+  const examQuestion = await getExamQuestion(getDb(c.env.DB), c.req.param('id'));
+  return ok(c, { examQuestion }, EXAM_QUESTION_MESSAGES.RETRIEVED);
 });
 
-examQuestionsApp.patch('/:id', zValidator('json', updateExamQuestionSchema), async (c) => {
-  const q = await updateExamQuestion(getDb(c.env.DB), c.req.param('id'), c.req.valid('json'));
-  return c.json({ examQuestion: q });
+examQuestionsApp.patch('/:id', zValidate('json', updateExamQuestionSchema), async (c) => {
+  const examQuestion = await updateExamQuestion(
+    getDb(c.env.DB),
+    c.req.param('id'),
+    c.req.valid('json'),
+  );
+  return ok(c, { examQuestion }, EXAM_QUESTION_MESSAGES.UPDATED);
 });
 
 examQuestionsApp.delete('/:id', async (c) => {
   await deleteExamQuestion(getDb(c.env.DB), c.req.param('id'));
-  return c.json({ success: true });
+  return deleted(c, EXAM_QUESTION_MESSAGES.DELETED);
 });
 
 export { examQuestionsApp };

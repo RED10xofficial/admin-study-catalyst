@@ -1,14 +1,16 @@
 import { Hono } from 'hono';
-import { zValidator } from '@hono/zod-validator';
 import { z } from 'zod';
 import { and, eq } from 'drizzle-orm';
 import { questions, units } from '@admin-study-catalyst/shared/schema';
+import { QUESTION_MESSAGES, UNIT_MESSAGES } from '@admin-study-catalyst/shared/messages';
 import { getDb } from '../../db/client';
 import type { Bindings } from '../../env';
-import { forbidden } from '../../lib/errors';
+import { forbidden, notFound } from '../../lib/errors';
 import { kvGet, kvKeys, kvSet, TTL_30S } from '../../lib/kv';
 import { authMiddleware } from '../../middleware/auth';
 import { requireRole } from '../../middleware/rbac';
+import { zValidate } from '../../lib/validated';
+import { ok } from '../../lib/response';
 
 const contentApp = new Hono<{
   Bindings: Bindings;
@@ -39,7 +41,7 @@ async function getMembership(c: {
 
 contentApp.get(
   '/units',
-  zValidator('query', z.object({ examTypeId: z.string().optional() })),
+  zValidate('query', z.object({ examTypeId: z.string().optional() })),
   async (c) => {
     const { examTypeId } = c.req.valid('query');
     const membership = await getMembership(c);
@@ -53,7 +55,7 @@ contentApp.get(
       .select()
       .from(units)
       .where(and(...conditions));
-    return c.json({ units: unitList });
+    return ok(c, { units: unitList }, UNIT_MESSAGES.LISTED);
   },
 );
 
@@ -67,7 +69,7 @@ contentApp.get('/units/:id/questions', async (c) => {
     .from(units)
     .where(eq(units.id, unitId))
     .get();
-  if (!unit || unit.isDeleted) return c.json({ error: 'Unit not found' }, 404);
+  if (!unit || unit.isDeleted) throw notFound('Unit not found');
   if (unit.accessType === 'premium' && membership !== 'premium') {
     throw forbidden('Premium membership required');
   }
@@ -81,9 +83,11 @@ contentApp.get('/units/:id/questions', async (c) => {
     .where(and(...qConditions))
     .orderBy(questions.sequenceOrder);
 
-  return c.json({
-    questions: questionList.map(({ correctAnswer: _ca, ...q }) => q),
-  });
+  return ok(
+    c,
+    { questions: questionList.map(({ correctAnswer: _ca, ...q }) => q) },
+    QUESTION_MESSAGES.LISTED,
+  );
 });
 
 export { contentApp };

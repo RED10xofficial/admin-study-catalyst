@@ -1,5 +1,4 @@
 import { Hono } from 'hono';
-import { zValidator } from '@hono/zod-validator';
 import type { Bindings } from '../../env';
 import { getDb } from '../../db/client';
 import { authMiddleware } from '../../middleware/auth';
@@ -10,6 +9,9 @@ import {
   questionListSchema,
   reorderQuestionSchema,
 } from '@admin-study-catalyst/shared/validators';
+import { QUESTION_MESSAGES } from '@admin-study-catalyst/shared/messages';
+import { zValidate } from '../../lib/validated';
+import { created, deleted, ok } from '../../lib/response';
 import {
   createQuestion,
   listQuestions,
@@ -26,35 +28,42 @@ const questionsApp = new Hono<{
 
 questionsApp.use('*', authMiddleware, requireRole('admin'));
 
-questionsApp.get('/', zValidator('query', questionListSchema), async (c) => {
-  const query = c.req.valid('query');
-  return c.json({ questions: await listQuestions(getDb(c.env.DB), query) });
+questionsApp.get('/', zValidate('query', questionListSchema), async (c) => {
+  return ok(
+    c,
+    { questions: await listQuestions(getDb(c.env.DB), c.req.valid('query')) },
+    QUESTION_MESSAGES.LISTED,
+  );
 });
 
-questionsApp.post('/', zValidator('json', createQuestionSchema), async (c) => {
-  const q = await createQuestion(getDb(c.env.DB), c.env.R2, c.req.valid('json'));
-  return c.json({ question: q }, 201);
+questionsApp.post('/', zValidate('json', createQuestionSchema), async (c) => {
+  const question = await createQuestion(getDb(c.env.DB), c.env.R2, c.req.valid('json'));
+  return created(c, { question }, QUESTION_MESSAGES.CREATED);
 });
 
-questionsApp.patch('/reorder', zValidator('json', reorderQuestionSchema), async (c) => {
+questionsApp.patch('/reorder', zValidate('json', reorderQuestionSchema), async (c) => {
   await reorderQuestions(getDb(c.env.DB), c.req.valid('json').questions);
-  return c.json({ success: true });
+  return ok(c, null, QUESTION_MESSAGES.REORDERED);
 });
 
 questionsApp.get('/:id', async (c) => {
-  return c.json({
-    question: await getQuestion(getDb(c.env.DB), c.req.param('id')),
-  });
+  const question = await getQuestion(getDb(c.env.DB), c.req.param('id'));
+  return ok(c, { question }, QUESTION_MESSAGES.RETRIEVED);
 });
 
-questionsApp.patch('/:id', zValidator('json', updateQuestionSchema), async (c) => {
-  const q = await updateQuestion(getDb(c.env.DB), c.env.R2, c.req.param('id'), c.req.valid('json'));
-  return c.json({ question: q });
+questionsApp.patch('/:id', zValidate('json', updateQuestionSchema), async (c) => {
+  const question = await updateQuestion(
+    getDb(c.env.DB),
+    c.env.R2,
+    c.req.param('id'),
+    c.req.valid('json'),
+  );
+  return ok(c, { question }, QUESTION_MESSAGES.UPDATED);
 });
 
 questionsApp.delete('/:id', async (c) => {
   await deleteQuestion(getDb(c.env.DB), c.req.param('id'));
-  return c.json({ success: true });
+  return deleted(c, QUESTION_MESSAGES.DELETED);
 });
 
 export { questionsApp };

@@ -52,7 +52,7 @@ async function getAdminToken() {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ email: 'admin@test.com', password: 'Admin123!' }),
   });
-  return (await res.json<{ accessToken: string }>()).accessToken;
+  return (await res.json<{ data: { accessToken: string } }>()).data.accessToken;
 }
 
 describe('Exam Questions', () => {
@@ -77,7 +77,7 @@ describe('Exam Questions', () => {
   };
 
   it('creates an exam question', async () => {
-    const res = await SELF.fetch('http://localhost/admin/exam-questions', {
+    const res = await SELF.fetch('http://localhost/exam-questions', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -89,7 +89,7 @@ describe('Exam Questions', () => {
   });
 
   it('filters by difficulty', async () => {
-    await SELF.fetch('http://localhost/admin/exam-questions', {
+    await SELF.fetch('http://localhost/exam-questions', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -97,7 +97,7 @@ describe('Exam Questions', () => {
       },
       body: JSON.stringify(baseQ),
     });
-    await SELF.fetch('http://localhost/admin/exam-questions', {
+    await SELF.fetch('http://localhost/exam-questions', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -111,11 +111,11 @@ describe('Exam Questions', () => {
     });
 
     const res = await SELF.fetch(
-      'http://localhost/admin/exam-questions?difficulty=hard&unitId=' + encodeURIComponent(UNIT_ID),
+      'http://localhost/exam-questions?difficulty=hard&unitId=' + encodeURIComponent(UNIT_ID),
       { headers: { Authorization: `Bearer ${token}` } },
     );
-    const body = await res.json<{ examQuestions: unknown[] }>();
-    expect(body.examQuestions).toHaveLength(1);
+    const body = await res.json<{ data: { examQuestions: unknown[] } }>();
+    expect(body.data.examQuestions).toHaveLength(1);
   });
 
   it('blocks delete if question is in active exam', async () => {
@@ -145,7 +145,7 @@ describe('Exam Questions', () => {
       answeredAt: now(),
     });
 
-    const res = await SELF.fetch(`http://localhost/admin/exam-questions/${qId}`, {
+    const res = await SELF.fetch(`http://localhost/exam-questions/${qId}`, {
       method: 'DELETE',
       headers: { Authorization: `Bearer ${token}` },
     });

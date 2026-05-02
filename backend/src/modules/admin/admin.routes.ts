@@ -1,10 +1,12 @@
 import { Hono } from 'hono';
-import { zValidator } from '@hono/zod-validator';
 import { getDb } from '../../db/client';
 import type { Bindings } from '../../env';
 import { authMiddleware } from '../../middleware/auth';
 import { requireRole } from '../../middleware/rbac';
 import { studentListSchema, updateStudentSchema } from '@admin-study-catalyst/shared/validators';
+import { ADMIN_MESSAGES } from '@admin-study-catalyst/shared/messages';
+import { zValidate } from '../../lib/validated';
+import { ok } from '../../lib/response';
 import {
   getMembershipAnalytics,
   getQuestionAnalytics,
@@ -20,12 +22,12 @@ const adminApp = new Hono<{
 
 adminApp.use('*', authMiddleware, requireRole('admin'));
 
-adminApp.get('/students', zValidator('query', studentListSchema), async (c) => {
+adminApp.get('/students', zValidate('query', studentListSchema), async (c) => {
   const students = await listStudents(getDb(c.env.DB), c.req.valid('query'));
-  return c.json({ students });
+  return ok(c, { students }, ADMIN_MESSAGES.STUDENTS_LISTED);
 });
 
-adminApp.patch('/students/:id', zValidator('json', updateStudentSchema), async (c) => {
+adminApp.patch('/students/:id', zValidate('json', updateStudentSchema), async (c) => {
   const student = await updateStudent(
     getDb(c.env.DB),
     c.env.KV,
@@ -33,22 +35,22 @@ adminApp.patch('/students/:id', zValidator('json', updateStudentSchema), async (
     c.req.param('id'),
     c.req.valid('json'),
   );
-  return c.json({ student });
+  return ok(c, { student }, ADMIN_MESSAGES.STUDENT_UPDATED);
 });
 
 adminApp.get('/students/:id/exams', async (c) => {
   const exams = await getStudentExamHistory(getDb(c.env.DB), c.req.param('id'));
-  return c.json({ exams });
+  return ok(c, { exams }, ADMIN_MESSAGES.STUDENT_EXAM_HISTORY);
 });
 
 adminApp.get('/analytics/membership', async (c) => {
   const analytics = await getMembershipAnalytics(getDb(c.env.DB));
-  return c.json({ analytics });
+  return ok(c, { analytics }, ADMIN_MESSAGES.ANALYTICS_MEMBERSHIP);
 });
 
 adminApp.get('/analytics/questions', async (c) => {
   const analytics = await getQuestionAnalytics(getDb(c.env.DB));
-  return c.json({ analytics });
+  return ok(c, { analytics }, ADMIN_MESSAGES.ANALYTICS_QUESTIONS);
 });
 
 export { adminApp };

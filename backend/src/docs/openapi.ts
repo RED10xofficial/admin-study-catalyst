@@ -139,13 +139,7 @@ export const openApiDocument = {
           '200': {
             description: 'OK',
             content: {
-              'application/json': {
-                schema: {
-                  type: 'object',
-                  properties: { success: { type: 'boolean' } },
-                  required: ['success'],
-                },
-              },
+              'application/json': { schema: { $ref: '#/components/schemas/NullDataResponse' } },
             },
           },
         },
@@ -167,13 +161,7 @@ export const openApiDocument = {
           '200': {
             description: 'Acknowledged (whether or not the email exists)',
             content: {
-              'application/json': {
-                schema: {
-                  type: 'object',
-                  properties: { message: { type: 'string' } },
-                  required: ['message'],
-                },
-              },
+              'application/json': { schema: { $ref: '#/components/schemas/NullDataResponse' } },
             },
           },
           '400': { $ref: '#/components/responses/BadRequest' },
@@ -195,13 +183,7 @@ export const openApiDocument = {
           '200': {
             description: 'Password updated',
             content: {
-              'application/json': {
-                schema: {
-                  type: 'object',
-                  properties: { message: { type: 'string' } },
-                  required: ['message'],
-                },
-              },
+              'application/json': { schema: { $ref: '#/components/schemas/NullDataResponse' } },
             },
           },
           '400': { $ref: '#/components/responses/BadRequest' },
@@ -253,9 +235,20 @@ export const openApiDocument = {
             content: {
               'application/json': {
                 schema: {
-                  type: 'object',
-                  required: ['examTypes'],
-                  properties: { examTypes: { type: 'array', items: { type: 'object' } } },
+                  allOf: [
+                    { $ref: '#/components/schemas/ApiEnvelope' },
+                    {
+                      properties: {
+                        data: {
+                          type: 'object',
+                          required: ['examTypes'],
+                          properties: {
+                            examTypes: { type: 'array', items: { type: 'object' } },
+                          },
+                        },
+                      },
+                    },
+                  ],
                 },
               },
             },
@@ -280,9 +273,18 @@ export const openApiDocument = {
             content: {
               'application/json': {
                 schema: {
-                  type: 'object',
-                  required: ['examType'],
-                  properties: { examType: { type: 'object' } },
+                  allOf: [
+                    { $ref: '#/components/schemas/ApiEnvelope' },
+                    {
+                      properties: {
+                        data: {
+                          type: 'object',
+                          required: ['examType'],
+                          properties: { examType: { type: 'object' } },
+                        },
+                      },
+                    },
+                  ],
                 },
               },
             },
@@ -306,9 +308,18 @@ export const openApiDocument = {
             content: {
               'application/json': {
                 schema: {
-                  type: 'object',
-                  required: ['examType'],
-                  properties: { examType: { type: 'object' } },
+                  allOf: [
+                    { $ref: '#/components/schemas/ApiEnvelope' },
+                    {
+                      properties: {
+                        data: {
+                          type: 'object',
+                          required: ['examType'],
+                          properties: { examType: { type: 'object' } },
+                        },
+                      },
+                    },
+                  ],
                 },
               },
             },
@@ -335,9 +346,18 @@ export const openApiDocument = {
             content: {
               'application/json': {
                 schema: {
-                  type: 'object',
-                  required: ['examType'],
-                  properties: { examType: { type: 'object' } },
+                  allOf: [
+                    { $ref: '#/components/schemas/ApiEnvelope' },
+                    {
+                      properties: {
+                        data: {
+                          type: 'object',
+                          required: ['examType'],
+                          properties: { examType: { type: 'object' } },
+                        },
+                      },
+                    },
+                  ],
                 },
               },
             },
@@ -358,13 +378,7 @@ export const openApiDocument = {
           '200': {
             description: 'Deleted',
             content: {
-              'application/json': {
-                schema: {
-                  type: 'object',
-                  properties: { success: { type: 'boolean' } },
-                  required: ['success'],
-                },
-              },
+              'application/json': { schema: { $ref: '#/components/schemas/NullDataResponse' } },
             },
           },
           '401': { $ref: '#/components/responses/Unauthorized' },
@@ -399,9 +413,18 @@ export const openApiDocument = {
             content: {
               'application/json': {
                 schema: {
-                  type: 'object',
-                  required: ['units'],
-                  properties: { units: { type: 'array', items: { type: 'object' } } },
+                  allOf: [
+                    { $ref: '#/components/schemas/ApiEnvelope' },
+                    {
+                      properties: {
+                        data: {
+                          type: 'object',
+                          required: ['units'],
+                          properties: { units: { type: 'array', items: { type: 'object' } } },
+                        },
+                      },
+                    },
+                  ],
                 },
               },
             },
@@ -426,9 +449,18 @@ export const openApiDocument = {
             content: {
               'application/json': {
                 schema: {
-                  type: 'object',
-                  required: ['unit'],
-                  properties: { unit: { type: 'object' } },
+                  allOf: [
+                    { $ref: '#/components/schemas/ApiEnvelope' },
+                    {
+                      properties: {
+                        data: {
+                          type: 'object',
+                          required: ['unit'],
+                          properties: { unit: { type: 'object' } },
+                        },
+                      },
+                    },
+                  ],
                 },
               },
             },
@@ -452,9 +484,18 @@ export const openApiDocument = {
             content: {
               'application/json': {
                 schema: {
-                  type: 'object',
-                  required: ['unit'],
-                  properties: { unit: { type: 'object' } },
+                  allOf: [
+                    { $ref: '#/components/schemas/ApiEnvelope' },
+                    {
+                      properties: {
+                        data: {
+                          type: 'object',
+                          required: ['unit'],
+                          properties: { unit: { type: 'object' } },
+                        },
+                      },
+                    },
+                  ],
                 },
               },
             },
@@ -481,9 +522,18 @@ export const openApiDocument = {
             content: {
               'application/json': {
                 schema: {
-                  type: 'object',
-                  required: ['unit'],
-                  properties: { unit: { type: 'object' } },
+                  allOf: [
+                    { $ref: '#/components/schemas/ApiEnvelope' },
+                    {
+                      properties: {
+                        data: {
+                          type: 'object',
+                          required: ['unit'],
+                          properties: { unit: { type: 'object' } },
+                        },
+                      },
+                    },
+                  ],
                 },
               },
             },
@@ -504,13 +554,7 @@ export const openApiDocument = {
           '200': {
             description: 'Marked deleted',
             content: {
-              'application/json': {
-                schema: {
-                  type: 'object',
-                  properties: { success: { type: 'boolean' } },
-                  required: ['success'],
-                },
-              },
+              'application/json': { schema: { $ref: '#/components/schemas/NullDataResponse' } },
             },
           },
           '401': { $ref: '#/components/responses/Unauthorized' },
@@ -545,9 +589,20 @@ export const openApiDocument = {
             content: {
               'application/json': {
                 schema: {
-                  type: 'object',
-                  required: ['questions'],
-                  properties: { questions: { type: 'array', items: { type: 'object' } } },
+                  allOf: [
+                    { $ref: '#/components/schemas/ApiEnvelope' },
+                    {
+                      properties: {
+                        data: {
+                          type: 'object',
+                          required: ['questions'],
+                          properties: {
+                            questions: { type: 'array', items: { type: 'object' } },
+                          },
+                        },
+                      },
+                    },
+                  ],
                 },
               },
             },
@@ -573,9 +628,18 @@ export const openApiDocument = {
             content: {
               'application/json': {
                 schema: {
-                  type: 'object',
-                  required: ['question'],
-                  properties: { question: { type: 'object' } },
+                  allOf: [
+                    { $ref: '#/components/schemas/ApiEnvelope' },
+                    {
+                      properties: {
+                        data: {
+                          type: 'object',
+                          required: ['question'],
+                          properties: { question: { type: 'object' } },
+                        },
+                      },
+                    },
+                  ],
                 },
               },
             },
@@ -603,13 +667,7 @@ export const openApiDocument = {
           '200': {
             description: 'OK',
             content: {
-              'application/json': {
-                schema: {
-                  type: 'object',
-                  properties: { success: { type: 'boolean' } },
-                  required: ['success'],
-                },
-              },
+              'application/json': { schema: { $ref: '#/components/schemas/NullDataResponse' } },
             },
           },
           '400': { $ref: '#/components/responses/BadRequest' },
@@ -630,9 +688,18 @@ export const openApiDocument = {
             content: {
               'application/json': {
                 schema: {
-                  type: 'object',
-                  required: ['question'],
-                  properties: { question: { type: 'object' } },
+                  allOf: [
+                    { $ref: '#/components/schemas/ApiEnvelope' },
+                    {
+                      properties: {
+                        data: {
+                          type: 'object',
+                          required: ['question'],
+                          properties: { question: { type: 'object' } },
+                        },
+                      },
+                    },
+                  ],
                 },
               },
             },
@@ -659,9 +726,18 @@ export const openApiDocument = {
             content: {
               'application/json': {
                 schema: {
-                  type: 'object',
-                  required: ['question'],
-                  properties: { question: { type: 'object' } },
+                  allOf: [
+                    { $ref: '#/components/schemas/ApiEnvelope' },
+                    {
+                      properties: {
+                        data: {
+                          type: 'object',
+                          required: ['question'],
+                          properties: { question: { type: 'object' } },
+                        },
+                      },
+                    },
+                  ],
                 },
               },
             },
@@ -681,13 +757,7 @@ export const openApiDocument = {
           '200': {
             description: 'OK',
             content: {
-              'application/json': {
-                schema: {
-                  type: 'object',
-                  properties: { success: { type: 'boolean' } },
-                  required: ['success'],
-                },
-              },
+              'application/json': { schema: { $ref: '#/components/schemas/NullDataResponse' } },
             },
           },
           '401': { $ref: '#/components/responses/Unauthorized' },
@@ -722,9 +792,20 @@ export const openApiDocument = {
             content: {
               'application/json': {
                 schema: {
-                  type: 'object',
-                  required: ['examQuestions'],
-                  properties: { examQuestions: { type: 'array', items: { type: 'object' } } },
+                  allOf: [
+                    { $ref: '#/components/schemas/ApiEnvelope' },
+                    {
+                      properties: {
+                        data: {
+                          type: 'object',
+                          required: ['examQuestions'],
+                          properties: {
+                            examQuestions: { type: 'array', items: { type: 'object' } },
+                          },
+                        },
+                      },
+                    },
+                  ],
                 },
               },
             },
@@ -751,9 +832,18 @@ export const openApiDocument = {
             content: {
               'application/json': {
                 schema: {
-                  type: 'object',
-                  required: ['examQuestion'],
-                  properties: { examQuestion: { type: 'object' } },
+                  allOf: [
+                    { $ref: '#/components/schemas/ApiEnvelope' },
+                    {
+                      properties: {
+                        data: {
+                          type: 'object',
+                          required: ['examQuestion'],
+                          properties: { examQuestion: { type: 'object' } },
+                        },
+                      },
+                    },
+                  ],
                 },
               },
             },
@@ -776,9 +866,18 @@ export const openApiDocument = {
             content: {
               'application/json': {
                 schema: {
-                  type: 'object',
-                  required: ['examQuestion'],
-                  properties: { examQuestion: { type: 'object' } },
+                  allOf: [
+                    { $ref: '#/components/schemas/ApiEnvelope' },
+                    {
+                      properties: {
+                        data: {
+                          type: 'object',
+                          required: ['examQuestion'],
+                          properties: { examQuestion: { type: 'object' } },
+                        },
+                      },
+                    },
+                  ],
                 },
               },
             },
@@ -807,9 +906,18 @@ export const openApiDocument = {
             content: {
               'application/json': {
                 schema: {
-                  type: 'object',
-                  required: ['examQuestion'],
-                  properties: { examQuestion: { type: 'object' } },
+                  allOf: [
+                    { $ref: '#/components/schemas/ApiEnvelope' },
+                    {
+                      properties: {
+                        data: {
+                          type: 'object',
+                          required: ['examQuestion'],
+                          properties: { examQuestion: { type: 'object' } },
+                        },
+                      },
+                    },
+                  ],
                 },
               },
             },
@@ -829,13 +937,7 @@ export const openApiDocument = {
           '200': {
             description: 'OK',
             content: {
-              'application/json': {
-                schema: {
-                  type: 'object',
-                  properties: { success: { type: 'boolean' } },
-                  required: ['success'],
-                },
-              },
+              'application/json': { schema: { $ref: '#/components/schemas/NullDataResponse' } },
             },
           },
           '401': { $ref: '#/components/responses/Unauthorized' },
@@ -869,9 +971,20 @@ export const openApiDocument = {
             content: {
               'application/json': {
                 schema: {
-                  type: 'object',
-                  required: ['bookCodes'],
-                  properties: { bookCodes: { type: 'array', items: { type: 'object' } } },
+                  allOf: [
+                    { $ref: '#/components/schemas/ApiEnvelope' },
+                    {
+                      properties: {
+                        data: {
+                          type: 'object',
+                          required: ['bookCodes'],
+                          properties: {
+                            bookCodes: { type: 'array', items: { type: 'object' } },
+                          },
+                        },
+                      },
+                    },
+                  ],
                 },
               },
             },
@@ -897,9 +1010,18 @@ export const openApiDocument = {
             content: {
               'application/json': {
                 schema: {
-                  type: 'object',
-                  required: ['bookCode'],
-                  properties: { bookCode: { type: 'object' } },
+                  allOf: [
+                    { $ref: '#/components/schemas/ApiEnvelope' },
+                    {
+                      properties: {
+                        data: {
+                          type: 'object',
+                          required: ['bookCode'],
+                          properties: { bookCode: { type: 'object' } },
+                        },
+                      },
+                    },
+                  ],
                 },
               },
             },
@@ -921,9 +1043,18 @@ export const openApiDocument = {
             content: {
               'application/json': {
                 schema: {
-                  type: 'object',
-                  required: ['downloadUrl'],
-                  properties: { downloadUrl: { type: 'string' } },
+                  allOf: [
+                    { $ref: '#/components/schemas/ApiEnvelope' },
+                    {
+                      properties: {
+                        data: {
+                          type: 'object',
+                          required: ['downloadUrl'],
+                          properties: { downloadUrl: { type: 'string', format: 'uri' } },
+                        },
+                      },
+                    },
+                  ],
                 },
               },
             },
@@ -951,9 +1082,18 @@ export const openApiDocument = {
             content: {
               'application/json': {
                 schema: {
-                  type: 'object',
-                  required: ['created'],
-                  properties: { created: { type: 'integer' } },
+                  allOf: [
+                    { $ref: '#/components/schemas/ApiEnvelope' },
+                    {
+                      properties: {
+                        data: {
+                          type: 'object',
+                          required: ['created'],
+                          properties: { created: { type: 'integer' } },
+                        },
+                      },
+                    },
+                  ],
                 },
               },
             },
@@ -982,9 +1122,18 @@ export const openApiDocument = {
             content: {
               'application/json': {
                 schema: {
-                  type: 'object',
-                  required: ['bookCode'],
-                  properties: { bookCode: { type: 'object' } },
+                  allOf: [
+                    { $ref: '#/components/schemas/ApiEnvelope' },
+                    {
+                      properties: {
+                        data: {
+                          type: 'object',
+                          required: ['bookCode'],
+                          properties: { bookCode: { type: 'object' } },
+                        },
+                      },
+                    },
+                  ],
                 },
               },
             },
@@ -1004,13 +1153,7 @@ export const openApiDocument = {
           '200': {
             description: 'OK',
             content: {
-              'application/json': {
-                schema: {
-                  type: 'object',
-                  properties: { success: { type: 'boolean' } },
-                  required: ['success'],
-                },
-              },
+              'application/json': { schema: { $ref: '#/components/schemas/NullDataResponse' } },
             },
           },
           '401': { $ref: '#/components/responses/Unauthorized' },
@@ -1031,6 +1174,70 @@ export const openApiDocument = {
       },
     },
     schemas: {
+      // ── Envelope primitives ────────────────────────────────────────────────
+      ApiErrorDetail: {
+        type: 'object',
+        required: ['message', 'code'],
+        properties: {
+          field: { type: 'string', description: 'Dot-notation path of the invalid field' },
+          message: { type: 'string' },
+          code: { type: 'string', example: 'invalid_format' },
+        },
+      },
+      /**
+       * Base success envelope. Individual responses extend `data` via allOf.
+       */
+      ApiEnvelope: {
+        type: 'object',
+        required: ['status', 'code', 'message', 'data', 'errors', 'meta', 'links'],
+        properties: {
+          status: { type: 'string', enum: ['success'], example: 'success' },
+          code: { type: 'integer', example: 200 },
+          message: { type: 'string', example: 'Resource retrieved successfully.' },
+          data: { nullable: true },
+          errors: {
+            nullable: true,
+            type: 'array',
+            items: { $ref: '#/components/schemas/ApiErrorDetail' },
+          },
+          meta: { nullable: true },
+          links: { nullable: true },
+        },
+      },
+      /**
+       * Error envelope returned for all 4xx / 5xx responses.
+       */
+      ApiErrorEnvelope: {
+        type: 'object',
+        required: ['status', 'code', 'message', 'data', 'errors', 'meta', 'links'],
+        properties: {
+          status: { type: 'string', enum: ['error'], example: 'error' },
+          code: { type: 'integer', example: 400 },
+          message: { type: 'string', example: 'Validation failed.' },
+          data: { nullable: true },
+          errors: {
+            nullable: true,
+            type: 'array',
+            items: { $ref: '#/components/schemas/ApiErrorDetail' },
+          },
+          meta: { nullable: true },
+          links: { nullable: true },
+        },
+      },
+      /**
+       * Success response where data is null (delete / action-only endpoints).
+       */
+      NullDataResponse: {
+        allOf: [
+          { $ref: '#/components/schemas/ApiEnvelope' },
+          {
+            properties: {
+              data: { nullable: true, type: 'object' },
+            },
+          },
+        ],
+      },
+      // ── Health ─────────────────────────────────────────────────────────────
       HealthResponse: {
         type: 'object',
         required: ['status', 'ts'],
@@ -1039,6 +1246,7 @@ export const openApiDocument = {
           ts: { type: 'string', format: 'date-time' },
         },
       },
+      // ── Auth ───────────────────────────────────────────────────────────────
       RegisterRequest: {
         type: 'object',
         required: ['name', 'email', 'password'],
@@ -1071,9 +1279,20 @@ export const openApiDocument = {
         },
       },
       RegisterResponse: {
-        type: 'object',
-        required: ['user'],
-        properties: { user: { $ref: '#/components/schemas/UserPublic' } },
+        allOf: [
+          { $ref: '#/components/schemas/ApiEnvelope' },
+          {
+            properties: {
+              code: { type: 'integer', example: 201 },
+              message: { type: 'string', example: 'User registered successfully.' },
+              data: {
+                type: 'object',
+                required: ['user'],
+                properties: { user: { $ref: '#/components/schemas/UserPublic' } },
+              },
+            },
+          },
+        ],
       },
       LoginRequest: {
         type: 'object',
@@ -1084,14 +1303,34 @@ export const openApiDocument = {
         },
       },
       LoginResponse: {
-        type: 'object',
-        required: ['accessToken'],
-        properties: { accessToken: { type: 'string' } },
+        allOf: [
+          { $ref: '#/components/schemas/ApiEnvelope' },
+          {
+            properties: {
+              message: { type: 'string', example: 'Logged in successfully.' },
+              data: {
+                type: 'object',
+                required: ['accessToken'],
+                properties: { accessToken: { type: 'string' } },
+              },
+            },
+          },
+        ],
       },
       RefreshResponse: {
-        type: 'object',
-        required: ['accessToken'],
-        properties: { accessToken: { type: 'string' } },
+        allOf: [
+          { $ref: '#/components/schemas/ApiEnvelope' },
+          {
+            properties: {
+              message: { type: 'string', example: 'Token refreshed successfully.' },
+              data: {
+                type: 'object',
+                required: ['accessToken'],
+                properties: { accessToken: { type: 'string' } },
+              },
+            },
+          },
+        ],
       },
       ForgotPasswordRequest: {
         type: 'object',
@@ -1110,6 +1349,7 @@ export const openApiDocument = {
           },
         },
       },
+      // ── Upload ─────────────────────────────────────────────────────────────
       PresignRequest: {
         type: 'object',
         required: ['type', 'filename', 'mimeType'],
@@ -1120,13 +1360,24 @@ export const openApiDocument = {
         },
       },
       PresignResponse: {
-        type: 'object',
-        required: ['uploadUrl', 'key'],
-        properties: {
-          uploadUrl: { type: 'string' },
-          key: { type: 'string' },
-        },
+        allOf: [
+          { $ref: '#/components/schemas/ApiEnvelope' },
+          {
+            properties: {
+              message: { type: 'string', example: 'Upload URL generated successfully.' },
+              data: {
+                type: 'object',
+                required: ['uploadUrl', 'key'],
+                properties: {
+                  uploadUrl: { type: 'string', format: 'uri' },
+                  key: { type: 'string' },
+                },
+              },
+            },
+          },
+        ],
       },
+      // ── Exam types ─────────────────────────────────────────────────────────
       CreateExamTypeRequest: {
         type: 'object',
         required: ['examName'],
@@ -1144,6 +1395,7 @@ export const openApiDocument = {
           examQuestionCount: { type: 'integer', minimum: 1 },
         },
       },
+      // ── Units ──────────────────────────────────────────────────────────────
       CreateUnitRequest: {
         type: 'object',
         required: ['unitName', 'examTypeId'],
@@ -1167,6 +1419,7 @@ export const openApiDocument = {
           mimeType: { type: 'string' },
         },
       },
+      // ── Questions ──────────────────────────────────────────────────────────
       CreateQuestionRequest: {
         type: 'object',
         required: [
@@ -1227,6 +1480,7 @@ export const openApiDocument = {
           },
         },
       },
+      // ── Exam questions ─────────────────────────────────────────────────────
       CreateExamQuestionRequest: {
         type: 'object',
         required: [
@@ -1266,6 +1520,7 @@ export const openApiDocument = {
           accessType: { type: 'string', enum: ['free', 'premium'] },
         },
       },
+      // ── Book codes ─────────────────────────────────────────────────────────
       GenerateBookCodeRequest: {
         type: 'object',
         properties: {
@@ -1287,49 +1542,42 @@ export const openApiDocument = {
           status: { type: 'string', enum: ['blocked', 'unused', 'expired'] },
         },
       },
-      ErrorBody: {
-        type: 'object',
-        properties: {
-          error: { type: 'string' },
-          code: { type: 'string' },
-        },
-      },
     },
     responses: {
       BadRequest: {
         description: 'Validation or domain error',
         content: {
-          'application/json': { schema: { $ref: '#/components/schemas/ErrorBody' } },
+          'application/json': { schema: { $ref: '#/components/schemas/ApiErrorEnvelope' } },
         },
       },
       Unauthorized: {
         description: 'Missing or invalid credentials / token',
         content: {
-          'application/json': { schema: { $ref: '#/components/schemas/ErrorBody' } },
+          'application/json': { schema: { $ref: '#/components/schemas/ApiErrorEnvelope' } },
         },
       },
       Forbidden: {
         description: 'Authenticated but insufficient permissions',
         content: {
-          'application/json': { schema: { $ref: '#/components/schemas/ErrorBody' } },
+          'application/json': { schema: { $ref: '#/components/schemas/ApiErrorEnvelope' } },
         },
       },
       NotFound: {
         description: 'Resource not found',
         content: {
-          'application/json': { schema: { $ref: '#/components/schemas/ErrorBody' } },
+          'application/json': { schema: { $ref: '#/components/schemas/ApiErrorEnvelope' } },
         },
       },
       Conflict: {
         description: 'Conflict (e.g. email already registered)',
         content: {
-          'application/json': { schema: { $ref: '#/components/schemas/ErrorBody' } },
+          'application/json': { schema: { $ref: '#/components/schemas/ApiErrorEnvelope' } },
         },
       },
       TooManyRequests: {
         description: 'Login rate limited',
         content: {
-          'application/json': { schema: { $ref: '#/components/schemas/ErrorBody' } },
+          'application/json': { schema: { $ref: '#/components/schemas/ApiErrorEnvelope' } },
         },
       },
     },

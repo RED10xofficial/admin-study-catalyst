@@ -92,7 +92,9 @@ async function setupStudentAndQuestion() {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ email: 'student@test.com', password: 'Stu12345!' }),
   });
-  const { accessToken } = await loginRes.json<{ accessToken: string }>();
+  const {
+    data: { accessToken },
+  } = await loginRes.json<{ data: { accessToken: string } }>();
 
   return { studentId, q1Id, q2Id, token: accessToken };
 }
@@ -105,7 +107,7 @@ describe('Learning Progress', () => {
 
   it('records progress for the first question in a unit', async () => {
     const { q1Id, token } = await setupStudentAndQuestion();
-    const res = await SELF.fetch('http://localhost/student/progress', {
+    const res = await SELF.fetch('http://localhost/progress', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -123,12 +125,12 @@ describe('Learning Progress', () => {
       'Content-Type': 'application/json',
       Authorization: `Bearer ${token}`,
     };
-    await SELF.fetch('http://localhost/student/progress', {
+    await SELF.fetch('http://localhost/progress', {
       method: 'POST',
       headers,
       body: JSON.stringify(payload),
     });
-    const res = await SELF.fetch('http://localhost/student/progress', {
+    const res = await SELF.fetch('http://localhost/progress', {
       method: 'POST',
       headers,
       body: JSON.stringify(payload),
@@ -138,7 +140,7 @@ describe('Learning Progress', () => {
 
   it('blocks access to question 2 before question 1 is answered', async () => {
     const { q2Id, token } = await setupStudentAndQuestion();
-    const res = await SELF.fetch('http://localhost/student/progress', {
+    const res = await SELF.fetch('http://localhost/progress', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -155,12 +157,12 @@ describe('Learning Progress', () => {
       'Content-Type': 'application/json',
       Authorization: `Bearer ${token}`,
     };
-    await SELF.fetch('http://localhost/student/progress', {
+    await SELF.fetch('http://localhost/progress', {
       method: 'POST',
       headers,
       body: JSON.stringify({ questionId: q1Id, answer: 'A' }),
     });
-    const res = await SELF.fetch('http://localhost/student/progress', {
+    const res = await SELF.fetch('http://localhost/progress', {
       method: 'POST',
       headers,
       body: JSON.stringify({ questionId: q2Id, answer: 'B' }),
@@ -177,7 +179,7 @@ describe('Learning Progress', () => {
       .set({ accessType: 'premium' })
       .where(eq(schema.questions.id, q1Id));
 
-    const res = await SELF.fetch('http://localhost/student/progress', {
+    const res = await SELF.fetch('http://localhost/progress', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

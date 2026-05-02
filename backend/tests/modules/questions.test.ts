@@ -55,7 +55,7 @@ async function setup() {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ email: 'admin@test.com', password: 'Admin123!' }),
   });
-  return (await loginRes.json<{ accessToken: string }>()).accessToken;
+  return (await loginRes.json<{ data: { accessToken: string } }>()).data.accessToken;
 }
 
 describe('Learning Questions', () => {
@@ -80,7 +80,7 @@ describe('Learning Questions', () => {
   };
 
   it('creates a learning question', async () => {
-    const res = await SELF.fetch('http://localhost/admin/questions', {
+    const res = await SELF.fetch('http://localhost/questions', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -89,12 +89,12 @@ describe('Learning Questions', () => {
       body: JSON.stringify(baseQuestion),
     });
     expect(res.status).toBe(201);
-    const body = await res.json<{ question: { question: string } }>();
-    expect(body.question.question).toBe('What is the femur?');
+    const body = await res.json<{ data: { question: { question: string } } }>();
+    expect(body.data.question.question).toBe('What is the femur?');
   });
 
   it('rejects if correctAnswer does not match any option', async () => {
-    const res = await SELF.fetch('http://localhost/admin/questions', {
+    const res = await SELF.fetch('http://localhost/questions', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -107,7 +107,7 @@ describe('Learning Questions', () => {
 
   it('blocks delete when student progress exists', async () => {
     const db = drizzle(env.DB, { schema });
-    const createRes = await SELF.fetch('http://localhost/admin/questions', {
+    const createRes = await SELF.fetch('http://localhost/questions', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -115,7 +115,9 @@ describe('Learning Questions', () => {
       },
       body: JSON.stringify(baseQuestion),
     });
-    const { question } = await createRes.json<{ question: { id: string } }>();
+    const {
+      data: { question },
+    } = await createRes.json<{ data: { question: { id: string } } }>();
 
     await db.insert(schema.studentQuestionProgress).values({
       id: generateId(),
@@ -125,7 +127,7 @@ describe('Learning Questions', () => {
       answeredAt: now(),
     });
 
-    const delRes = await SELF.fetch(`http://localhost/admin/questions/${question.id}`, {
+    const delRes = await SELF.fetch(`http://localhost/questions/${question.id}`, {
       method: 'DELETE',
       headers: { Authorization: `Bearer ${token}` },
     });

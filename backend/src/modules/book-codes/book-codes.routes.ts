@@ -1,5 +1,4 @@
 import { Hono } from 'hono';
-import { zValidator } from '@hono/zod-validator';
 import type { Bindings } from '../../env';
 import { getDb } from '../../db/client';
 import { authMiddleware } from '../../middleware/auth';
@@ -10,6 +9,9 @@ import {
   updateCodeSchema,
   codeListSchema,
 } from '@admin-study-catalyst/shared/validators';
+import { BOOK_CODE_MESSAGES } from '@admin-study-catalyst/shared/messages';
+import { zValidate } from '../../lib/validated';
+import { created, deleted, ok } from '../../lib/response';
 import {
   generateSingleCode,
   generateBulkCodes,
@@ -26,41 +28,43 @@ const bookCodesApp = new Hono<{
 
 bookCodesApp.use('*', authMiddleware, requireRole('admin'));
 
-bookCodesApp.get('/', zValidator('query', codeListSchema), async (c) => {
-  return c.json({
-    bookCodes: await listBookCodes(getDb(c.env.DB), c.req.valid('query')),
-  });
+bookCodesApp.get('/', zValidate('query', codeListSchema), async (c) => {
+  return ok(
+    c,
+    { bookCodes: await listBookCodes(getDb(c.env.DB), c.req.valid('query')) },
+    BOOK_CODE_MESSAGES.LISTED,
+  );
 });
 
 bookCodesApp.get('/export', async (c) => {
-  const url = await exportCodesToR2(getDb(c.env.DB), c.env);
-  return c.json({ downloadUrl: url });
+  const downloadUrl = await exportCodesToR2(getDb(c.env.DB), c.env);
+  return ok(c, { downloadUrl }, BOOK_CODE_MESSAGES.EXPORTED);
 });
 
-bookCodesApp.post('/', zValidator('json', generateCodeSchema), async (c) => {
+bookCodesApp.post('/', zValidate('json', generateCodeSchema), async (c) => {
   const { expiresAt } = c.req.valid('json');
   const bookCode = await generateSingleCode(getDb(c.env.DB), c.env.STUDENT_ORIGIN, expiresAt);
-  return c.json({ bookCode }, 201);
+  return created(c, { bookCode }, BOOK_CODE_MESSAGES.CREATED);
 });
 
-bookCodesApp.post('/bulk', zValidator('json', bulkGenerateSchema), async (c) => {
+bookCodesApp.post('/bulk', zValidate('json', bulkGenerateSchema), async (c) => {
   const { count, expiresAt } = c.req.valid('json');
   const result = await generateBulkCodes(getDb(c.env.DB), c.env.STUDENT_ORIGIN, count, expiresAt);
-  return c.json(result, 201);
+  return created(c, result, BOOK_CODE_MESSAGES.BULK_CREATED);
 });
 
-bookCodesApp.patch('/:id', zValidator('json', updateCodeSchema), async (c) => {
+bookCodesApp.patch('/:id', zValidate('json', updateCodeSchema), async (c) => {
   const bookCode = await updateCodeStatus(
     getDb(c.env.DB),
     c.req.param('id'),
     c.req.valid('json').status,
   );
-  return c.json({ bookCode });
+  return ok(c, { bookCode }, BOOK_CODE_MESSAGES.UPDATED);
 });
 
 bookCodesApp.delete('/:id', async (c) => {
   await deleteBookCode(getDb(c.env.DB), c.req.param('id'));
-  return c.json({ success: true });
+  return deleted(c, BOOK_CODE_MESSAGES.DELETED);
 });
 
 export { bookCodesApp };

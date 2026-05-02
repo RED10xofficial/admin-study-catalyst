@@ -26,7 +26,7 @@ async function getAdminToken() {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ email: 'admin@test.com', password: 'Admin123!' }),
   });
-  return (await res.json<{ accessToken: string }>()).accessToken;
+  return (await res.json<{ data: { accessToken: string } }>()).data.accessToken;
 }
 
 describe('Book Codes', () => {
@@ -38,7 +38,7 @@ describe('Book Codes', () => {
   });
 
   it('generates a single book code', async () => {
-    const res = await SELF.fetch('http://localhost/admin/book-codes', {
+    const res = await SELF.fetch('http://localhost/book-codes', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -48,14 +48,14 @@ describe('Book Codes', () => {
     });
     expect(res.status).toBe(201);
     const body = await res.json<{
-      bookCode: { code: string; status: string };
+      data: { bookCode: { code: string; status: string } };
     }>();
-    expect(body.bookCode.code).toMatch(/^[A-Z0-9]{12}$/);
-    expect(body.bookCode.status).toBe('unused');
+    expect(body.data.bookCode.code).toMatch(/^[A-Z0-9]{12}$/);
+    expect(body.data.bookCode.status).toBe('unused');
   });
 
   it('generates bulk codes (≤100)', async () => {
-    const res = await SELF.fetch('http://localhost/admin/book-codes/bulk', {
+    const res = await SELF.fetch('http://localhost/book-codes/bulk', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -64,8 +64,8 @@ describe('Book Codes', () => {
       body: JSON.stringify({ count: 5 }),
     });
     expect(res.status).toBe(201);
-    const body = await res.json<{ created: number }>();
-    expect(body.created).toBe(5);
+    const body = await res.json<{ data: { created: number } }>();
+    expect(body.data.created).toBe(5);
   });
 
   it('blocks hard delete of a used code', async () => {
@@ -81,7 +81,7 @@ describe('Book Codes', () => {
       createdAt: now(),
     });
 
-    const res = await SELF.fetch(`http://localhost/admin/book-codes/${codeId}`, {
+    const res = await SELF.fetch(`http://localhost/book-codes/${codeId}`, {
       method: 'DELETE',
       headers: { Authorization: `Bearer ${token}` },
     });
@@ -89,7 +89,7 @@ describe('Book Codes', () => {
   });
 
   it('blocks a code', async () => {
-    const createRes = await SELF.fetch('http://localhost/admin/book-codes', {
+    const createRes = await SELF.fetch('http://localhost/book-codes', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -97,9 +97,11 @@ describe('Book Codes', () => {
       },
       body: JSON.stringify({}),
     });
-    const { bookCode } = await createRes.json<{ bookCode: { id: string } }>();
+    const {
+      data: { bookCode },
+    } = await createRes.json<{ data: { bookCode: { id: string } } }>();
 
-    const patchRes = await SELF.fetch(`http://localhost/admin/book-codes/${bookCode.id}`, {
+    const patchRes = await SELF.fetch(`http://localhost/book-codes/${bookCode.id}`, {
       method: 'PATCH',
       headers: {
         'Content-Type': 'application/json',
@@ -108,7 +110,7 @@ describe('Book Codes', () => {
       body: JSON.stringify({ status: 'blocked' }),
     });
     expect(patchRes.status).toBe(200);
-    const body = await patchRes.json<{ bookCode: { status: string } }>();
-    expect(body.bookCode.status).toBe('blocked');
+    const body = await patchRes.json<{ data: { bookCode: { status: string } } }>();
+    expect(body.data.bookCode.status).toBe('blocked');
   });
 });
