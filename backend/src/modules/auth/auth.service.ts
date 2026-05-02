@@ -2,7 +2,7 @@ import { and, eq } from 'drizzle-orm';
 import type { KVNamespace } from '@cloudflare/workers-types';
 import { bookCodes, passwordResetTokens, users } from '@admin-study-catalyst/shared/schema';
 import type { Db } from '../../db/client';
-import { badRequest, conflict, unauthorized } from '../../lib/errors';
+import { badRequest, conflict, notFound, unauthorized } from '../../lib/errors';
 import { hashPassword, verifyPassword } from '../../lib/hash';
 import { generateId, now } from '../../lib/id';
 import { generateRefreshToken, signAccessToken } from '../../lib/jwt';
@@ -196,6 +196,26 @@ export async function forgotPassword(
   });
 
   await sendEmail(user.email, rawToken);
+}
+
+export async function getMe(db: Db, userId: string) {
+  const user = await db
+    .select({
+      id: users.id,
+      name: users.name,
+      email: users.email,
+      phone: users.phone,
+      role: users.role,
+      membershipType: users.membershipType,
+      membershipSource: users.membershipSource,
+      createdAt: users.createdAt,
+    })
+    .from(users)
+    .where(eq(users.id, userId))
+    .get();
+
+  if (!user) throw notFound('User not found');
+  return user;
 }
 
 export async function resetPassword(

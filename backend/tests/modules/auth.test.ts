@@ -22,9 +22,9 @@ describe('POST /auth/register', () => {
       body: JSON.stringify({ name: 'Alice', email: 'alice@test.com', password: 'Alice123!' }),
     });
     expect(res.status).toBe(201);
-    const body = await res.json<{ user: { role: string; membershipType: string } }>();
-    expect(body.user.role).toBe('student');
-    expect(body.user.membershipType).toBe('normal');
+    const body = await res.json<{ data: { user: { role: string; membershipType: string } } }>();
+    expect(body.data.user.role).toBe('student');
+    expect(body.data.user.membershipType).toBe('normal');
   });
 
   it('returns 409 on duplicate email', async () => {
@@ -54,8 +54,8 @@ describe('POST /auth/register', () => {
       }),
     });
     expect(res.status).toBe(201);
-    const body = await res.json<{ user: { role: string } }>();
-    expect(body.user.role).toBe('student');
+    const body = await res.json<{ data: { user: { role: string } } }>();
+    expect(body.data.user.role).toBe('student');
   });
 });
 
@@ -78,8 +78,8 @@ describe('POST /auth/login', () => {
       body: JSON.stringify({ email: 'eve@test.com', password: 'Eve12345!' }),
     });
     expect(res.status).toBe(200);
-    const body = await res.json<{ accessToken: string }>();
-    expect(typeof body.accessToken).toBe('string');
+    const body = await res.json<{ data: { accessToken: string } }>();
+    expect(typeof body.data.accessToken).toBe('string');
     expect(res.headers.get('Set-Cookie')).toMatch(/refresh_token=/);
   });
 
@@ -91,8 +91,8 @@ describe('POST /auth/login', () => {
       body: JSON.stringify({ email: 'eve@test.com', password: 'WrongPass1!' }),
     });
     expect(res.status).toBe(401);
-    const body = await res.json<{ error: string }>();
-    expect(body.error).toBe('Invalid email or password');
+    const body = await res.json<{ message: string }>();
+    expect(body.message).toBe('Invalid email or password');
   });
 
   it('returns same 401 message for unknown email', async () => {
@@ -102,8 +102,8 @@ describe('POST /auth/login', () => {
       body: JSON.stringify({ email: 'nobody@test.com', password: 'Any12345!' }),
     });
     expect(res.status).toBe(401);
-    const body = await res.json<{ error: string }>();
-    expect(body.error).toBe('Invalid email or password');
+    const body = await res.json<{ message: string }>();
+    expect(body.message).toBe('Invalid email or password');
   });
 });
 
@@ -146,5 +146,49 @@ describe('POST /auth/forgot-password + /auth/reset-password', () => {
     expect(loggedIn.accessToken).toBeTruthy();
 
     await expect(resetPassword(db, { token: rawToken, password: 'Another123!' })).rejects.toThrow();
+  });
+});
+
+describe('GET /auth/me', () => {
+  beforeEach(clearAuthTables);
+
+  it('returns profile for an authenticated student', async () => {
+    await SELF.fetch('http://localhost/auth/register', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name: 'Meena', email: 'meena@test.com', password: 'Meena123!' }),
+    });
+    const loginRes = await SELF.fetch('http://localhost/auth/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email: 'meena@test.com', password: 'Meena123!' }),
+    });
+    const { data } = await loginRes.json<{ data: { accessToken: string } }>();
+
+    const res = await SELF.fetch('http://localhost/auth/me', {
+      headers: { Authorization: `Bearer ${data.accessToken}` },
+    });
+    expect(res.status).toBe(200);
+    const body = await res.json<{
+      data: {
+        user: {
+          id: string;
+          name: string;
+          email: string;
+          role: string;
+          membershipType: string;
+        };
+      };
+    }>();
+    expect(body.data.user.email).toBe('meena@test.com');
+    expect(body.data.user.role).toBe('student');
+    expect(body.data.user.membershipType).toBe('normal');
+    expect((body.data.user as Record<string, unknown>).passwordHash).toBeUndefined();
+    expect((body.data.user as Record<string, unknown>).isActive).toBeUndefined();
+  });
+
+  it('returns 401 when no token is provided', async () => {
+    const res = await SELF.fetch('http://localhost/auth/me');
+    expect(res.status).toBe(401);
   });
 });
