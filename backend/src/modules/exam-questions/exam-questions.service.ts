@@ -1,7 +1,8 @@
-import { and, count, eq } from 'drizzle-orm';
+import { and, count, eq, sql } from 'drizzle-orm';
 import type { Db } from '../../db/client';
 import {
   examQuestions,
+  questionStatistics,
   studentExamAnswers,
   studentExams,
 } from '@admin-study-catalyst/shared/schema';
@@ -11,6 +12,37 @@ import type {
 } from '@admin-study-catalyst/shared/validators';
 import { conflict, notFound } from '../../lib/errors';
 import { generateId, now } from '../../lib/id';
+
+// ---------------------------------------------------------------------------
+// Helpers
+// ---------------------------------------------------------------------------
+
+/**
+ * Shared select shape that includes LEFT-JOINed analytics columns.
+ * COALESCE ensures 0 is returned even when no statistics row exists yet.
+ */
+const questionWithStatsSelect = {
+  id: examQuestions.id,
+  question: examQuestions.question,
+  option1: examQuestions.option1,
+  option2: examQuestions.option2,
+  option3: examQuestions.option3,
+  option4: examQuestions.option4,
+  correctAnswer: examQuestions.correctAnswer,
+  shortDescription: examQuestions.shortDescription,
+  difficulty: examQuestions.difficulty,
+  unitId: examQuestions.unitId,
+  accessType: examQuestions.accessType,
+  isDeleted: examQuestions.isDeleted,
+  createdAt: examQuestions.createdAt,
+  totalAttempts: sql<number>`COALESCE(${questionStatistics.totalAttempts}, 0)`,
+  correctAttempts: sql<number>`COALESCE(${questionStatistics.correctAttempts}, 0)`,
+  wrongAttempts: sql<number>`COALESCE(${questionStatistics.wrongAttempts}, 0)`,
+} as const;
+
+// ---------------------------------------------------------------------------
+// CRUD
+// ---------------------------------------------------------------------------
 
 export async function createExamQuestion(db: Db, input: CreateExamQuestionInput) {
   const [q] = await db
@@ -48,8 +80,9 @@ export async function listExamQuestions(
   if (query.difficulty) conditions.push(eq(examQuestions.difficulty, query.difficulty));
 
   return db
-    .select()
+    .select(questionWithStatsSelect)
     .from(examQuestions)
+    .leftJoin(questionStatistics, eq(examQuestions.id, questionStatistics.questionId))
     .where(and(...conditions))
     .limit(query.limit)
     .offset((query.page - 1) * query.limit);
@@ -57,8 +90,9 @@ export async function listExamQuestions(
 
 export async function getExamQuestion(db: Db, id: string) {
   const q = await db
-    .select()
+    .select(questionWithStatsSelect)
     .from(examQuestions)
+    .leftJoin(questionStatistics, eq(examQuestions.id, questionStatistics.questionId))
     .where(and(eq(examQuestions.id, id), eq(examQuestions.isDeleted, false)))
     .get();
   if (!q) throw notFound('Exam question not found');

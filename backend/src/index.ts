@@ -35,7 +35,7 @@ app.route('/units', unitsApp);
 app.route('/questions', questionsApp);
 app.route('/exam-questions', examQuestionsApp);
 app.route('/book-codes', bookCodesApp);
-app.route('/', adminApp);
+app.route('/admin', adminApp);
 
 app.onError(errorHandler);
 app.notFound((c) =>

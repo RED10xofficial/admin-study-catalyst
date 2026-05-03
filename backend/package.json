@@ -11,9 +11,12 @@
     "db:generate": "drizzle-kit generate",
     "db:migrate:local": "wrangler d1 migrations apply DB --local",
     "db:migrate:remote": "wrangler d1 migrations apply DB",
-    "seed:generate": "tsx src/db/seed.ts > src/db/seed.sql",
+    "seed:generate": "tsx --env-file=.dev.vars src/db/seed.ts > src/db/seed.sql",
     "seed:local": "wrangler d1 execute DB --local --file=src/db/seed.sql",
-    "seed:remote": "wrangler d1 execute DB --file=src/db/seed.sql"
+    "seed:remote": "wrangler d1 execute DB --file=src/db/seed.sql",
+    "seed-data:generate": "tsx --env-file=.dev.vars src/db/seed-data.ts > src/db/seed-data.sql",
+    "seed-data:local": "wrangler d1 execute DB --local --file=src/db/seed-data.sql",
+    "seed-data:remote": "wrangler d1 execute DB --file=src/db/seed-data.sql"
   },
   "dependencies": {
     "@admin-study-catalyst/shared": "workspace:*",
