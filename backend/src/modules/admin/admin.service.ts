@@ -1,9 +1,12 @@
-import { and, asc, eq } from 'drizzle-orm';
+import { and, asc, desc, eq } from 'drizzle-orm';
 import type { KVNamespace } from '@cloudflare/workers-types';
 import {
   examQuestions,
   questionStatistics,
+  questions,
   studentExams,
+  studentQuestionProgress,
+  units,
   users,
 } from '@admin-study-catalyst/shared/schema';
 import type { StudentListQuery, UpdateStudentInput } from '@admin-study-catalyst/shared/validators';
@@ -77,12 +80,58 @@ export async function updateStudent(
   return updated;
 }
 
+export async function getStudent(db: Db, id: string) {
+  const user = await db
+    .select({
+      id: users.id,
+      name: users.name,
+      email: users.email,
+      phone: users.phone,
+      membershipType: users.membershipType,
+      membershipSource: users.membershipSource,
+      isActive: users.isActive,
+      createdAt: users.createdAt,
+      updatedAt: users.updatedAt,
+    })
+    .from(users)
+    .where(and(eq(users.id, id), eq(users.role, 'student')))
+    .get();
+  if (!user) throw notFound('Student not found');
+  return user;
+}
+
 export async function getStudentExamHistory(db: Db, studentId: string) {
   return db
-    .select()
+    .select({
+      id: studentExams.id,
+      unitId: studentExams.unitId,
+      unitName: units.unitName,
+      difficulty: studentExams.difficulty,
+      score: studentExams.score,
+      totalQuestions: studentExams.totalQuestions,
+      correctAnswers: studentExams.correctAnswers,
+      status: studentExams.status,
+      startedAt: studentExams.startedAt,
+      submittedAt: studentExams.submittedAt,
+    })
     .from(studentExams)
+    .innerJoin(units, eq(studentExams.unitId, units.id))
     .where(eq(studentExams.studentId, studentId))
-    .orderBy(asc(studentExams.startedAt));
+    .orderBy(desc(studentExams.startedAt));
+}
+
+export async function getStudentProgress(db: Db, studentId: string) {
+  return db
+    .select({
+      questionId: studentQuestionProgress.questionId,
+      unitId: questions.unitId,
+      unitName: units.unitName,
+      answeredAt: studentQuestionProgress.answeredAt,
+    })
+    .from(studentQuestionProgress)
+    .innerJoin(questions, eq(studentQuestionProgress.questionId, questions.id))
+    .innerJoin(units, eq(questions.unitId, units.id))
+    .where(eq(studentQuestionProgress.studentId, studentId));
 }
 
 export async function getMembershipAnalytics(db: Db) {
