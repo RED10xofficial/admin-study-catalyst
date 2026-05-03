@@ -5,6 +5,7 @@ import {
   studentExamAnswers,
   studentExams,
 } from '@admin-study-catalyst/shared/schema';
+import type { QuestionDifficulty } from '@admin-study-catalyst/shared';
 import type {
   CreateExamQuestionInput,
   UpdateExamQuestionInput,
@@ -38,7 +39,7 @@ export async function listExamQuestions(
   db: Db,
   query: {
     unitId?: string;
-    difficulty?: 'easy' | 'medium' | 'hard';
+    difficulty?: QuestionDifficulty;
     page: number;
     limit: number;
   },
@@ -103,22 +104,24 @@ export async function deleteExamQuestion(db: Db, id: string) {
     .get();
   if (!existing) throw notFound('Exam question not found');
 
-  const [{ activeCount }] = await db
+  const activeRow = await db
     .select({ activeCount: count() })
     .from(studentExamAnswers)
     .innerJoin(studentExams, eq(studentExamAnswers.examId, studentExams.id))
-    .where(and(eq(studentExamAnswers.questionId, id), eq(studentExams.status, 'active')));
+    .where(and(eq(studentExamAnswers.questionId, id), eq(studentExams.status, 'active')))
+    .get();
 
-  if ((activeCount ?? 0) > 0) {
+  if ((activeRow?.activeCount ?? 0) > 0) {
     throw conflict('Cannot delete: question is part of an active exam');
   }
 
-  const [{ histCount }] = await db
+  const histRow = await db
     .select({ histCount: count() })
     .from(studentExamAnswers)
-    .where(eq(studentExamAnswers.questionId, id));
+    .where(eq(studentExamAnswers.questionId, id))
+    .get();
 
-  if ((histCount ?? 0) > 0) {
+  if ((histRow?.histCount ?? 0) > 0) {
     await db.update(examQuestions).set({ isDeleted: true }).where(eq(examQuestions.id, id));
   } else {
     await db.delete(examQuestions).where(eq(examQuestions.id, id));

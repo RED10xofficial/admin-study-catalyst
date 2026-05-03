@@ -1,3 +1,4 @@
+import { QUESTION_DIFFICULTY_VALUES } from '../constants/question-difficulty';
 import { integer, sqliteTable, text, unique } from 'drizzle-orm/sqlite-core';
 import { users } from './users';
 import { units } from './units';
@@ -13,7 +14,7 @@ export const studentExams = sqliteTable(
     unitId: text('unit_id')
       .notNull()
       .references(() => units.id),
-    difficulty: text('difficulty', { enum: ['easy', 'medium', 'hard'] }).notNull(),
+    difficulty: text('difficulty', { enum: QUESTION_DIFFICULTY_VALUES }).notNull(),
     score: integer('score'),
     totalQuestions: integer('total_questions').notNull(),
     correctAnswers: integer('correct_answers'),

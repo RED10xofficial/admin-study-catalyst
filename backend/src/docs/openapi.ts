@@ -5,6 +5,8 @@
  * Narrative aligns with docs/superpowers/specs/2026-05-01-medical-lms-design.md
  * (Medical LMS: two Vue build targets, sequential learning, premium exams).
  */
+import { QUESTION_DIFFICULTY_VALUES } from '@admin-study-catalyst/shared';
+
 const apiOverviewMarkdown = [
   '## Medical LMS API (Study Catalyst)',
   '',
@@ -1239,7 +1241,7 @@ export const openApiDocument = {
           {
             name: 'difficulty',
             in: 'query',
-            schema: { type: 'string', enum: ['easy', 'medium', 'hard'] },
+            schema: { $ref: '#/components/schemas/QuestionDifficulty' },
           },
           { name: 'page', in: 'query', schema: { type: 'integer', minimum: 1, default: 1 } },
           {
@@ -2085,12 +2087,21 @@ export const openApiDocument = {
           isComplete: { type: 'boolean' },
         },
       },
+      /**
+       * Shared enum for exam bank difficulty (`exam_questions.difficulty`) and student exam pool selection (`POST /exams` body.difficulty).
+       */
+      QuestionDifficulty: {
+        type: 'string',
+        description:
+          'Exam bank tier: **easy**, **medium**, or **hard**. Students pass this when creating an exam to choose which labeled pool randomizes; admins set it per bank question.',
+        enum: [...QUESTION_DIFFICULTY_VALUES],
+      },
       StudentCreateExamRequest: {
         type: 'object',
         required: ['unitId', 'difficulty'],
         properties: {
           unitId: { type: 'string' },
-          difficulty: { type: 'string', enum: ['easy', 'medium', 'hard'] },
+          difficulty: { $ref: '#/components/schemas/QuestionDifficulty' },
         },
       },
       StudentSubmitExamRequest: {
@@ -2277,7 +2288,7 @@ export const openApiDocument = {
           option4: { type: 'string', minLength: 1 },
           correctAnswer: { type: 'string', minLength: 1 },
           shortDescription: { type: 'string' },
-          difficulty: { type: 'string', enum: ['easy', 'medium', 'hard'] },
+          difficulty: { $ref: '#/components/schemas/QuestionDifficulty' },
           unitId: { type: 'string' },
           accessType: { type: 'string', enum: ['free', 'premium'] },
         },
@@ -2292,7 +2303,7 @@ export const openApiDocument = {
           option4: { type: 'string' },
           correctAnswer: { type: 'string' },
           shortDescription: { type: 'string' },
-          difficulty: { type: 'string', enum: ['easy', 'medium', 'hard'] },
+          difficulty: { $ref: '#/components/schemas/QuestionDifficulty' },
           accessType: { type: 'string', enum: ['free', 'premium'] },
         },
       },

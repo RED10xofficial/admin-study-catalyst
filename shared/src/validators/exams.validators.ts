@@ -1,8 +1,9 @@
 import { z } from 'zod';
+import { QuestionDifficulty } from '../constants/question-difficulty';
 
 export const createExamSchema = z.object({
   unitId: z.string(),
-  difficulty: z.enum(['easy', 'medium', 'hard']),
+  difficulty: z.nativeEnum(QuestionDifficulty),
 });
 
 export const submitExamSchema = z.object({

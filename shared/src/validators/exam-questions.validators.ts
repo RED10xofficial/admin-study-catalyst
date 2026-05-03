@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { QuestionDifficulty } from '../constants/question-difficulty';
 
 export const createExamQuestionSchema = z.object({
   question: z.string().min(1),
@@ -8,7 +9,7 @@ export const createExamQuestionSchema = z.object({
   option4: z.string().min(1),
   correctAnswer: z.string().min(1),
   shortDescription: z.string().optional(),
-  difficulty: z.enum(['easy', 'medium', 'hard']),
+  difficulty: z.nativeEnum(QuestionDifficulty),
   unitId: z.string(),
   accessType: z.enum(['free', 'premium']).optional(),
 });
@@ -17,7 +18,7 @@ export const updateExamQuestionSchema = createExamQuestionSchema.partial().omit(
 
 export const examQuestionListSchema = z.object({
   unitId: z.string().optional(),
-  difficulty: z.enum(['easy', 'medium', 'hard']).optional(),
+  difficulty: z.nativeEnum(QuestionDifficulty).optional(),
   page: z.coerce.number().int().min(1).default(1),
   limit: z.coerce.number().int().min(1).max(100).default(50),
 });

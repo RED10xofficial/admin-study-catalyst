@@ -10,6 +10,7 @@ import {
   units,
   users,
 } from '@admin-study-catalyst/shared/schema';
+import { QuestionDifficulty } from '@admin-study-catalyst/shared';
 import type { CreateExamInput, SubmitExamInput } from '@admin-study-catalyst/shared/validators';
 import type { Db } from '../../db/client';
 import { conflict, forbidden, notFound, unprocessable } from '../../lib/errors';
@@ -238,8 +239,12 @@ export async function submitExam(
         : null;
 
     if (accuracy !== null) {
-      const newDifficulty: 'easy' | 'medium' | 'hard' =
-        accuracy > 0.8 ? 'easy' : accuracy >= 0.5 ? 'medium' : 'hard';
+      const newDifficulty =
+        accuracy > 0.8
+          ? QuestionDifficulty.Easy
+          : accuracy >= 0.5
+            ? QuestionDifficulty.Medium
+            : QuestionDifficulty.Hard;
       batchOps.push(
         db
           .update(examQuestions)
