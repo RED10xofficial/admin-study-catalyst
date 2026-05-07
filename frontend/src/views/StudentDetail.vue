@@ -1,52 +1,52 @@
 <template>
   <div>
-    <!-- Back + Loading skeleton -->
+    <!-- Back -->
     <button @click="router.back()"
-      class="flex items-center gap-2 text-sm text-gray-500 hover:text-gray-800 mb-5 transition-colors">
+      class="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 mb-5 transition-colors">
       <ArrowLeft class="w-4 h-4" /> Back to Students
     </button>
 
     <!-- Loading state -->
     <div v-if="loadingStudent" class="space-y-4">
-      <div class="h-8 w-64 bg-gray-200 animate-pulse rounded-lg" />
-      <div class="h-4 w-40 bg-gray-200 animate-pulse rounded-lg" />
-      <div class="h-40 bg-gray-200 animate-pulse rounded-xl mt-4" />
+      <div class="h-8 w-64 bg-gray-200 dark:bg-gray-700 animate-pulse rounded-lg" />
+      <div class="h-4 w-40 bg-gray-200 dark:bg-gray-700 animate-pulse rounded-lg" />
+      <div class="h-40 bg-gray-200 dark:bg-gray-700 animate-pulse rounded-xl mt-4" />
     </div>
 
     <!-- Not found -->
-    <div v-else-if="!student" class="text-center py-20 text-gray-400">
-      <UserX class="w-12 h-12 mx-auto mb-3 text-gray-300" />
+    <div v-else-if="!student" class="text-center py-20 text-gray-400 dark:text-gray-500">
+      <UserX class="w-12 h-12 mx-auto mb-3 text-gray-300 dark:text-gray-600" />
       <p class="font-medium">Student not found</p>
     </div>
 
     <template v-else>
       <!-- Profile header -->
-      <div class="bg-white rounded-2xl border border-gray-200 p-5 mb-5">
+      <div class="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-800 p-5 mb-5">
         <div class="flex flex-col sm:flex-row sm:items-center gap-4">
           <div class="w-14 h-14 rounded-2xl bg-primary/10 flex items-center justify-center shrink-0">
             <span class="text-xl font-bold text-primary">{{ initials(student.name) }}</span>
           </div>
           <div class="flex-1 min-w-0">
             <div class="flex flex-wrap items-center gap-2">
-              <h1 class="text-xl font-bold text-gray-900">{{ student.name }}</h1>
+              <h1 class="text-xl font-bold text-gray-900 dark:text-white">{{ student.name }}</h1>
               <span :class="['inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium',
                 student.isActive ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-600']">
                 {{ student.isActive ? 'Active' : 'Inactive' }}
               </span>
               <span :class="['inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium',
-                student.membershipType === 'premium' ? 'bg-primary/10 text-primary' : 'bg-gray-100 text-gray-600']">
+                student.membershipType === 'premium' ? 'bg-primary/10 text-primary' : 'bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300']">
                 <Star v-if="student.membershipType === 'premium'" class="w-3 h-3" />
                 {{ student.membershipType === 'premium' ? 'Premium' : 'Normal' }}
               </span>
             </div>
-            <p class="text-sm text-gray-500 mt-0.5">{{ student.email }}</p>
+            <p class="text-sm text-gray-500 dark:text-gray-400 mt-0.5">{{ student.email }}</p>
           </div>
           <!-- Toggle active button -->
           <button @click="promptToggleActive"
             :class="['flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium border transition-colors',
               student.isActive
-                ? 'border-red-200 text-red-600 hover:bg-red-50'
-                : 'border-green-200 text-green-700 hover:bg-green-50']">
+                ? 'border-red-200 dark:border-red-800 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20'
+                : 'border-green-200 dark:border-green-800 text-green-700 hover:bg-green-50 dark:hover:bg-green-900/20']">
             <UserX v-if="student.isActive" class="w-4 h-4" />
             <UserCheck v-else class="w-4 h-4" />
             {{ student.isActive ? 'Deactivate' : 'Activate' }}
@@ -54,17 +54,17 @@
         </div>
 
         <!-- Quick info chips -->
-        <div class="flex flex-wrap gap-3 mt-4 pt-4 border-t border-gray-100">
-          <div v-if="student.phone" class="flex items-center gap-1.5 text-xs text-gray-600">
-            <Phone class="w-3.5 h-3.5 text-gray-400" />
+        <div class="flex flex-wrap gap-3 mt-4 pt-4 border-t border-gray-100 dark:border-gray-800">
+          <div v-if="student.phone" class="flex items-center gap-1.5 text-xs text-gray-600 dark:text-gray-400">
+            <Phone class="w-3.5 h-3.5 text-gray-400 dark:text-gray-500" />
             {{ student.phone }}
           </div>
-          <div v-if="student.membershipSource" class="flex items-center gap-1.5 text-xs text-gray-600">
-            <Tag class="w-3.5 h-3.5 text-gray-400" />
+          <div v-if="student.membershipSource" class="flex items-center gap-1.5 text-xs text-gray-600 dark:text-gray-400">
+            <Tag class="w-3.5 h-3.5 text-gray-400 dark:text-gray-500" />
             {{ formatSource(student.membershipSource) }}
           </div>
-          <div class="flex items-center gap-1.5 text-xs text-gray-600">
-            <Calendar class="w-3.5 h-3.5 text-gray-400" />
+          <div class="flex items-center gap-1.5 text-xs text-gray-600 dark:text-gray-400">
+            <Calendar class="w-3.5 h-3.5 text-gray-400 dark:text-gray-500" />
             Joined {{ formatDate(student.createdAt) }}
           </div>
         </div>
@@ -72,35 +72,35 @@
 
       <!-- Summary stats -->
       <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-5">
-        <div class="bg-white rounded-xl border border-gray-200 p-4">
-          <p class="text-xs text-gray-500 mb-1">Total Exams</p>
-          <p class="text-2xl font-bold text-gray-900">{{ examHistory.length }}</p>
+        <div class="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-4">
+          <p class="text-xs text-gray-500 dark:text-gray-400 mb-1">Total Exams</p>
+          <p class="text-2xl font-bold text-gray-900 dark:text-white">{{ examHistory.length }}</p>
         </div>
-        <div class="bg-white rounded-xl border border-gray-200 p-4">
-          <p class="text-xs text-gray-500 mb-1">Submitted</p>
-          <p class="text-2xl font-bold text-gray-900">{{ submittedCount }}</p>
+        <div class="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-4">
+          <p class="text-xs text-gray-500 dark:text-gray-400 mb-1">Submitted</p>
+          <p class="text-2xl font-bold text-gray-900 dark:text-white">{{ submittedCount }}</p>
         </div>
-        <div class="bg-white rounded-xl border border-gray-200 p-4">
-          <p class="text-xs text-gray-500 mb-1">Avg. Score</p>
-          <p class="text-2xl font-bold text-gray-900">
+        <div class="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-4">
+          <p class="text-xs text-gray-500 dark:text-gray-400 mb-1">Avg. Score</p>
+          <p class="text-2xl font-bold text-gray-900 dark:text-white">
             {{ avgScore !== null ? `${avgScore}%` : '—' }}
           </p>
         </div>
-        <div class="bg-white rounded-xl border border-gray-200 p-4">
-          <p class="text-xs text-gray-500 mb-1">Questions Answered</p>
-          <p class="text-2xl font-bold text-gray-900">{{ progressItems.length }}</p>
+        <div class="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-4">
+          <p class="text-xs text-gray-500 dark:text-gray-400 mb-1">Questions Answered</p>
+          <p class="text-2xl font-bold text-gray-900 dark:text-white">{{ progressItems.length }}</p>
         </div>
       </div>
 
       <!-- Tabs -->
-      <div class="bg-white rounded-2xl border border-gray-200 overflow-hidden">
-        <div class="flex border-b border-gray-200">
+      <div class="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-800 overflow-hidden">
+        <div class="flex border-b border-gray-200 dark:border-gray-800">
           <button v-for="tab in tabs" :key="tab.id"
             @click="activeTab = tab.id"
             :class="['flex items-center gap-2 px-5 py-3.5 text-sm font-medium transition-colors border-b-2 -mb-px',
               activeTab === tab.id
                 ? 'text-primary border-primary'
-                : 'text-gray-500 border-transparent hover:text-gray-800']">
+                : 'text-gray-500 dark:text-gray-400 border-transparent hover:text-gray-800 dark:hover:text-gray-200']">
             <component :is="tab.icon" class="w-4 h-4" />
             {{ tab.label }}
           </button>
@@ -108,30 +108,30 @@
 
         <!-- Overview tab -->
         <div v-if="activeTab === 'overview'" class="p-5">
-          <h3 class="text-sm font-semibold text-gray-700 mb-3">Profile Information</h3>
+          <h3 class="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3">Profile Information</h3>
           <dl class="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <dt class="text-xs text-gray-500">Full Name</dt>
-              <dd class="text-sm text-gray-900 mt-0.5">{{ student.name }}</dd>
+              <dt class="text-xs text-gray-500 dark:text-gray-400">Full Name</dt>
+              <dd class="text-sm text-gray-900 dark:text-gray-100 mt-0.5">{{ student.name }}</dd>
             </div>
             <div>
-              <dt class="text-xs text-gray-500">Email Address</dt>
-              <dd class="text-sm text-gray-900 mt-0.5">{{ student.email }}</dd>
+              <dt class="text-xs text-gray-500 dark:text-gray-400">Email Address</dt>
+              <dd class="text-sm text-gray-900 dark:text-gray-100 mt-0.5">{{ student.email }}</dd>
             </div>
             <div>
-              <dt class="text-xs text-gray-500">Phone</dt>
-              <dd class="text-sm text-gray-900 mt-0.5">{{ student.phone || '—' }}</dd>
+              <dt class="text-xs text-gray-500 dark:text-gray-400">Phone</dt>
+              <dd class="text-sm text-gray-900 dark:text-gray-100 mt-0.5">{{ student.phone || '—' }}</dd>
             </div>
             <div>
-              <dt class="text-xs text-gray-500">Membership Type</dt>
-              <dd class="text-sm text-gray-900 mt-0.5 capitalize">{{ student.membershipType }}</dd>
+              <dt class="text-xs text-gray-500 dark:text-gray-400">Membership Type</dt>
+              <dd class="text-sm text-gray-900 dark:text-gray-100 mt-0.5 capitalize">{{ student.membershipType }}</dd>
             </div>
             <div>
-              <dt class="text-xs text-gray-500">Membership Source</dt>
-              <dd class="text-sm text-gray-900 mt-0.5">{{ formatSource(student.membershipSource) }}</dd>
+              <dt class="text-xs text-gray-500 dark:text-gray-400">Membership Source</dt>
+              <dd class="text-sm text-gray-900 dark:text-gray-100 mt-0.5">{{ formatSource(student.membershipSource) }}</dd>
             </div>
             <div>
-              <dt class="text-xs text-gray-500">Account Status</dt>
+              <dt class="text-xs text-gray-500 dark:text-gray-400">Account Status</dt>
               <dd class="mt-0.5">
                 <span :class="['inline-flex px-2 py-0.5 rounded-full text-xs font-medium',
                   student.isActive ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-600']">
@@ -140,22 +140,22 @@
               </dd>
             </div>
             <div>
-              <dt class="text-xs text-gray-500">Joined</dt>
-              <dd class="text-sm text-gray-900 mt-0.5">{{ formatDate(student.createdAt) }}</dd>
+              <dt class="text-xs text-gray-500 dark:text-gray-400">Joined</dt>
+              <dd class="text-sm text-gray-900 dark:text-gray-100 mt-0.5">{{ formatDate(student.createdAt) }}</dd>
             </div>
           </dl>
 
           <!-- Units practised summary -->
           <template v-if="unitProgress.size > 0">
-            <h3 class="text-sm font-semibold text-gray-700 mt-6 mb-3">Units Practised</h3>
+            <h3 class="text-sm font-semibold text-gray-700 dark:text-gray-300 mt-6 mb-3">Units Practised</h3>
             <div class="space-y-2">
               <div v-for="[unitId, unit] in unitProgress" :key="unitId"
-                class="flex items-center gap-3 py-2 px-3 rounded-lg bg-gray-50">
+                class="flex items-center gap-3 py-2 px-3 rounded-lg bg-gray-50 dark:bg-gray-800">
                 <div class="w-7 h-7 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
                   <BookOpen class="w-3.5 h-3.5 text-primary" />
                 </div>
                 <div class="flex-1 min-w-0">
-                  <p class="text-sm font-medium text-gray-800 truncate">{{ unit.unitName }}</p>
+                  <p class="text-sm font-medium text-gray-800 dark:text-gray-200 truncate">{{ unit.unitName }}</p>
                 </div>
                 <span class="text-xs font-semibold text-primary">{{ unit.count }} Qs</span>
               </div>
@@ -166,18 +166,18 @@
         <!-- Exam History tab -->
         <div v-else-if="activeTab === 'exams'" class="p-5">
           <div v-if="loadingExams" class="space-y-3">
-            <div v-for="i in 4" :key="i" class="h-20 bg-gray-100 animate-pulse rounded-xl" />
+            <div v-for="i in 4" :key="i" class="h-20 bg-gray-100 dark:bg-gray-800 animate-pulse rounded-xl" />
           </div>
-          <div v-else-if="examHistory.length === 0" class="text-center py-12 text-gray-400">
-            <ClipboardList class="w-10 h-10 mx-auto mb-3 text-gray-300" />
+          <div v-else-if="examHistory.length === 0" class="text-center py-12 text-gray-400 dark:text-gray-500">
+            <ClipboardList class="w-10 h-10 mx-auto mb-3 text-gray-300 dark:text-gray-600" />
             <p class="font-medium">No exams attended yet</p>
           </div>
           <div v-else class="space-y-3">
             <div v-for="exam in examHistory" :key="exam.id"
-              class="border border-gray-200 rounded-xl p-4 hover:border-primary/30 transition-colors">
+              class="border border-gray-200 dark:border-gray-700 rounded-xl p-4 hover:border-primary/30 dark:hover:border-primary/40 transition-colors">
               <div class="flex flex-wrap items-start justify-between gap-2 mb-2">
                 <div>
-                  <p class="text-sm font-semibold text-gray-800">{{ exam.unitName }}</p>
+                  <p class="text-sm font-semibold text-gray-800 dark:text-gray-200">{{ exam.unitName }}</p>
                   <div class="flex items-center gap-2 mt-1">
                     <span :class="['text-xs px-2 py-0.5 rounded-full font-medium capitalize',
                       exam.difficulty === 'easy' ? 'bg-green-50 text-green-700'
@@ -188,33 +188,33 @@
                     <span :class="['text-xs px-2 py-0.5 rounded-full font-medium',
                       exam.status === 'submitted' ? 'bg-primary/10 text-primary'
                       : exam.status === 'active' ? 'bg-blue-50 text-blue-600'
-                      : 'bg-gray-100 text-gray-500']">
+                      : 'bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400']">
                       {{ exam.status }}
                     </span>
                   </div>
                 </div>
                 <div class="text-right">
                   <template v-if="exam.status === 'submitted' && exam.correctAnswers !== null">
-                    <p class="text-lg font-bold text-gray-900">
+                    <p class="text-lg font-bold text-gray-900 dark:text-white">
                       {{ exam.correctAnswers }}/{{ exam.totalQuestions }}
                     </p>
-                    <p class="text-xs text-gray-500">
+                    <p class="text-xs text-gray-500 dark:text-gray-400">
                       {{ scorePercent(exam) }}% accuracy
                     </p>
                   </template>
-                  <p v-else class="text-sm text-gray-400">—</p>
+                  <p v-else class="text-sm text-gray-400 dark:text-gray-500">—</p>
                 </div>
               </div>
 
-              <!-- Score bar (only for submitted) -->
+              <!-- Score bar -->
               <template v-if="exam.status === 'submitted' && exam.correctAnswers !== null">
-                <div class="w-full bg-gray-100 rounded-full h-1.5 mt-2">
+                <div class="w-full bg-gray-100 dark:bg-gray-700 rounded-full h-1.5 mt-2">
                   <div class="bg-primary h-1.5 rounded-full transition-all"
                     :style="{ width: `${scorePercent(exam)}%` }" />
                 </div>
               </template>
 
-              <div class="flex items-center gap-4 mt-3 text-xs text-gray-500">
+              <div class="flex items-center gap-4 mt-3 text-xs text-gray-500 dark:text-gray-400">
                 <span class="flex items-center gap-1">
                   <Calendar class="w-3 h-3" />
                   {{ formatDate(exam.startedAt) }}
@@ -231,30 +231,30 @@
         <!-- Question Progress tab -->
         <div v-else-if="activeTab === 'progress'" class="p-5">
           <div v-if="loadingProgress" class="space-y-3">
-            <div v-for="i in 4" :key="i" class="h-20 bg-gray-100 animate-pulse rounded-xl" />
+            <div v-for="i in 4" :key="i" class="h-20 bg-gray-100 dark:bg-gray-800 animate-pulse rounded-xl" />
           </div>
-          <div v-else-if="progressItems.length === 0" class="text-center py-12 text-gray-400">
-            <BookOpen class="w-10 h-10 mx-auto mb-3 text-gray-300" />
+          <div v-else-if="progressItems.length === 0" class="text-center py-12 text-gray-400 dark:text-gray-500">
+            <BookOpen class="w-10 h-10 mx-auto mb-3 text-gray-300 dark:text-gray-600" />
             <p class="font-medium">No questions answered yet</p>
           </div>
           <div v-else>
-            <p class="text-xs text-gray-500 mb-3">
+            <p class="text-xs text-gray-500 dark:text-gray-400 mb-3">
               {{ progressItems.length }} question{{ progressItems.length !== 1 ? 's' : '' }} answered
               across {{ unitProgress.size }} unit{{ unitProgress.size !== 1 ? 's' : '' }}
             </p>
             <div class="space-y-3">
               <div v-for="[unitId, unit] in unitProgress" :key="unitId"
-                class="border border-gray-200 rounded-xl p-4">
+                class="border border-gray-200 dark:border-gray-700 rounded-xl p-4">
                 <div class="flex items-center justify-between mb-2">
                   <div class="flex items-center gap-2">
                     <div class="w-7 h-7 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
                       <BookOpen class="w-3.5 h-3.5 text-primary" />
                     </div>
-                    <p class="text-sm font-semibold text-gray-800">{{ unit.unitName }}</p>
+                    <p class="text-sm font-semibold text-gray-800 dark:text-gray-200">{{ unit.unitName }}</p>
                   </div>
                   <span class="text-sm font-bold text-primary">{{ unit.count }} Qs</span>
                 </div>
-                <p class="text-xs text-gray-500 ml-9">
+                <p class="text-xs text-gray-500 dark:text-gray-400 ml-9">
                   Last answered {{ formatDate(unit.lastAnswered) }}
                 </p>
               </div>
@@ -268,21 +268,21 @@
     <Teleport to="body">
       <Transition name="fade">
         <div v-if="showToggleModal && student" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
-          <div class="bg-white rounded-2xl shadow-xl w-full max-w-sm p-6">
+          <div class="bg-white dark:bg-gray-900 rounded-2xl shadow-xl w-full max-w-sm p-6">
             <div class="flex items-center gap-3 mb-4">
               <div :class="['w-10 h-10 rounded-full flex items-center justify-center shrink-0',
-                student.isActive ? 'bg-red-100' : 'bg-green-100']">
+                student.isActive ? 'bg-red-100 dark:bg-red-900/30' : 'bg-green-100 dark:bg-green-900/30']">
                 <UserX v-if="student.isActive" class="w-5 h-5 text-red-600" />
                 <UserCheck v-else class="w-5 h-5 text-green-600" />
               </div>
               <div>
-                <h3 class="font-semibold text-gray-900">
+                <h3 class="font-semibold text-gray-900 dark:text-gray-100">
                   {{ student.isActive ? 'Deactivate Student' : 'Activate Student' }}
                 </h3>
-                <p class="text-sm text-gray-500">{{ student.name }}</p>
+                <p class="text-sm text-gray-500 dark:text-gray-400">{{ student.name }}</p>
               </div>
             </div>
-            <p class="text-sm text-gray-600 mb-5">
+            <p class="text-sm text-gray-600 dark:text-gray-400 mb-5">
               {{
                 student.isActive
                   ? 'This student will no longer be able to access the platform.'
@@ -292,7 +292,7 @@
             <p v-if="toggleError" class="text-sm text-red-600 mb-3">{{ toggleError }}</p>
             <div class="flex gap-3">
               <button @click="showToggleModal = false; toggleError = ''"
-                class="flex-1 px-4 py-2 rounded-lg border border-gray-200 text-sm font-medium text-gray-700 hover:bg-gray-50">
+                class="flex-1 px-4 py-2 rounded-lg border border-gray-200 dark:border-gray-700 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800">
                 Cancel
               </button>
               <button @click="confirmToggleActive"
@@ -366,15 +366,18 @@ const tabs = [
 
 // ── Computed ───────────────────────────────────────────────────────────────
 const submittedCount = computed(() =>
-  examHistory.value.filter((e) => e.status === 'submitted').length,
+  examHistory.value.filter((e: StudentExam) => e.status === 'submitted').length,
 )
 
 const avgScore = computed(() => {
   const submitted = examHistory.value.filter(
-    (e) => e.status === 'submitted' && e.correctAnswers !== null && e.totalQuestions > 0,
+    (e: StudentExam) => e.status === 'submitted' && e.correctAnswers !== null && e.totalQuestions > 0,
   )
   if (submitted.length === 0) return null
-  const total = submitted.reduce((sum, e) => sum + (e.correctAnswers! / e.totalQuestions) * 100, 0)
+  const total = submitted.reduce(
+    (sum: number, e: StudentExam) => sum + (e.correctAnswers! / e.totalQuestions) * 100,
+    0,
+  )
   return Math.round(total / submitted.length)
 })
 

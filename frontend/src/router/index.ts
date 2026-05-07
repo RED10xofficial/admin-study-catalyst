@@ -72,6 +72,11 @@ const router = createRouter({
           name: ROUTE_NAMES.STUDENT_DETAIL,
           component: () => import('@/views/StudentDetail.vue'),
         },
+        {
+          path: 'book-codes',
+          name: ROUTE_NAMES.BOOK_CODES,
+          component: () => import('@/views/BookCodes.vue'),
+        },
       ],
     },
   ],

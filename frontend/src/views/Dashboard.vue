@@ -108,9 +108,9 @@
             </h3>
 
             <!-- Accent bar -->
-            <div class="h-1.5 bg-gray-100 dark:bg-gray-800 rounded-full overflow-hidden">
+            <!-- <div class="h-1.5 bg-gray-100 dark:bg-gray-800 rounded-full overflow-hidden">
               <div class="h-full w-full rounded-full bg-primary/30" />
-            </div>
+            </div> -->
           </div>
         </div>
       </div>

@@ -1,37 +1,37 @@
 <template>
-  <div class="p-6 max-w-7xl mx-auto">
+  <div>
     <!-- Header -->
     <div class="flex items-center justify-between mb-6">
       <div>
-        <h1 class="text-2xl font-bold text-gray-900">Students</h1>
-        <p class="text-sm text-gray-500 mt-0.5">Manage and monitor registered students</p>
+        <h1 class="text-2xl font-bold text-gray-900 dark:text-gray-100">Students</h1>
+        <p class="text-sm text-gray-500 dark:text-gray-400 mt-0.5">Manage and monitor registered students</p>
       </div>
     </div>
 
     <!-- Filters -->
-    <div class="bg-white rounded-xl border border-gray-200 p-4 mb-5 flex flex-wrap gap-3 items-end">
+    <div class="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-4 mb-5 flex flex-wrap gap-3 items-end">
       <div class="flex flex-col gap-1 min-w-[160px]">
-        <label class="text-xs font-medium text-gray-600">Membership</label>
+        <label class="text-xs font-medium text-gray-600 dark:text-gray-400">Membership</label>
         <select v-model="filterMembership" @change="handleFilterChange"
-          class="border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary">
+          class="border border-gray-200 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-400 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary">
           <option value="">All Memberships</option>
           <option value="normal">Normal</option>
           <option value="premium">Premium</option>
         </select>
       </div>
       <div class="flex flex-col gap-1 min-w-[140px]">
-        <label class="text-xs font-medium text-gray-600">Status</label>
+        <label class="text-xs font-medium text-gray-600 dark:text-gray-400">Status</label>
         <select v-model="filterActive" @change="handleFilterChange"
-          class="border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary">
+          class="border border-gray-200 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-400 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary">
           <option value="">All</option>
           <option value="true">Active</option>
           <option value="false">Inactive</option>
         </select>
       </div>
       <div class="flex flex-col gap-1 min-w-[160px]">
-        <label class="text-xs font-medium text-gray-600">Source</label>
+        <label class="text-xs font-medium text-gray-600 dark:text-gray-400">Source</label>
         <select v-model="filterSource" @change="handleFilterChange"
-          class="border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary">
+          class="border border-gray-200 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-400 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary">
           <option value="">All Sources</option>
           <option value="direct_registration">Direct Registration</option>
           <option value="book_qr">Book QR</option>
@@ -40,23 +40,23 @@
       </div>
       <button v-if="filterMembership || filterActive || filterSource"
         @click="clearFilters"
-        class="text-sm text-gray-500 hover:text-gray-700 flex items-center gap-1 px-3 py-2 rounded-lg border border-gray-200 hover:bg-gray-50">
+        class="text-sm text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 flex items-center gap-1 px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800">
         <X class="w-4 h-4" /> Clear
       </button>
     </div>
 
     <!-- Table -->
-    <div class="bg-white rounded-xl border border-gray-200 overflow-hidden">
+    <div class="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 overflow-hidden">
       <table class="w-full text-sm">
-        <thead class="bg-gray-50 border-b border-gray-200">
+        <thead class="bg-gray-50 dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800">
           <tr>
-            <th class="text-left px-4 py-3 font-semibold text-gray-600">Student</th>
-            <th class="text-left px-4 py-3 font-semibold text-gray-600">Phone</th>
-            <th class="text-left px-4 py-3 font-semibold text-gray-600">Membership</th>
-            <th class="text-left px-4 py-3 font-semibold text-gray-600">Source</th>
-            <th class="text-left px-4 py-3 font-semibold text-gray-600">Status</th>
-            <th class="text-left px-4 py-3 font-semibold text-gray-600">Joined</th>
-            <th class="text-right px-4 py-3 font-semibold text-gray-600">Actions</th>
+            <th class="text-left px-4 py-3 font-semibold text-gray-600 dark:text-gray-400">Student</th>
+            <th class="text-left px-4 py-3 font-semibold text-gray-600 dark:text-gray-400">Phone</th>
+            <th class="text-left px-4 py-3 font-semibold text-gray-600 dark:text-gray-400">Membership</th>
+            <th class="text-left px-4 py-3 font-semibold text-gray-600 dark:text-gray-400">Source</th>
+            <th class="text-left px-4 py-3 font-semibold text-gray-600 dark:text-gray-400">Status</th>
+            <th class="text-left px-4 py-3 font-semibold text-gray-600 dark:text-gray-400">Joined</th>
+            <th class="text-right px-4 py-3 font-semibold text-gray-600 dark:text-gray-400">Actions</th>
           </tr>
         </thead>
         <tbody>
@@ -71,29 +71,29 @@
           </tr>
 
           <tr v-else v-for="student in students" :key="student.id"
-            class="border-b border-gray-100 last:border-0 hover:bg-gray-50/50 transition-colors">
+            class="border-b border-gray-100 dark:border-gray-800 last:border-0 hover:bg-gray-50/50 dark:hover:bg-gray-800/50 transition-colors">
             <td class="px-4 py-3">
               <div class="flex items-center gap-3">
                 <div class="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
                   <span class="text-xs font-semibold text-primary">{{ initials(student.name) }}</span>
                 </div>
                 <div>
-                  <p class="font-medium text-gray-900">{{ student.name }}</p>
-                  <p class="text-xs text-gray-500">{{ student.email }}</p>
+                  <p class="font-medium text-gray-900 dark:text-gray-100">{{ student.name }}</p>
+                  <p class="text-xs text-gray-500 dark:text-gray-400">{{ student.email }}</p>
                 </div>
               </div>
             </td>
-            <td class="px-4 py-3 text-gray-600">{{ student.phone || '—' }}</td>
+            <td class="px-4 py-3 text-gray-600 dark:text-gray-400">{{ student.phone || '—' }}</td>
             <td class="px-4 py-3">
               <span :class="['inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium',
                 student.membershipType === 'premium'
                   ? 'bg-primary/10 text-primary'
-                  : 'bg-gray-100 text-gray-600']">
+                  : 'bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300']">
                 <Star v-if="student.membershipType === 'premium'" class="w-3 h-3" />
                 {{ student.membershipType === 'premium' ? 'Premium' : 'Normal' }}
               </span>
             </td>
-            <td class="px-4 py-3 text-gray-600 text-xs">{{ formatSource(student.membershipSource) }}</td>
+            <td class="px-4 py-3 text-gray-600 dark:text-gray-400 text-xs">{{ formatSource(student.membershipSource) }}</td>
             <td class="px-4 py-3">
               <span :class="['inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium',
                 student.isActive ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-600']">
@@ -137,21 +137,21 @@
     <Teleport to="body">
       <Transition name="fade">
         <div v-if="toggleTarget" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
-          <div class="bg-white rounded-2xl shadow-xl w-full max-w-sm p-6">
+          <div class="bg-white dark:bg-gray-900 rounded-2xl shadow-xl w-full max-w-sm p-6">
             <div class="flex items-center gap-3 mb-4">
               <div :class="['w-10 h-10 rounded-full flex items-center justify-center shrink-0',
-                toggleTarget.isActive ? 'bg-red-100' : 'bg-green-100']">
+                toggleTarget.isActive ? 'bg-red-100 dark:bg-red-900/30' : 'bg-green-100 dark:bg-green-900/30']">
                 <UserX v-if="toggleTarget.isActive" class="w-5 h-5 text-red-600" />
                 <UserCheck v-else class="w-5 h-5 text-green-600" />
               </div>
               <div>
-                <h3 class="font-semibold text-gray-900">
+                <h3 class="font-semibold text-gray-900 dark:text-gray-100">
                   {{ toggleTarget.isActive ? 'Deactivate Student' : 'Activate Student' }}
                 </h3>
-                <p class="text-sm text-gray-500">{{ toggleTarget.name }}</p>
+                <p class="text-sm text-gray-500 dark:text-gray-400">{{ toggleTarget.name }}</p>
               </div>
             </div>
-            <p class="text-sm text-gray-600 mb-5">
+            <p class="text-sm text-gray-600 dark:text-gray-400 mb-5">
               {{
                 toggleTarget.isActive
                   ? 'This student will no longer be able to access the platform.'
@@ -161,7 +161,7 @@
             <p v-if="toggleError" class="text-sm text-red-600 mb-3">{{ toggleError }}</p>
             <div class="flex gap-3">
               <button @click="toggleTarget = null; toggleError = ''"
-                class="flex-1 px-4 py-2 rounded-lg border border-gray-200 text-sm font-medium text-gray-700 hover:bg-gray-50">
+                class="flex-1 px-4 py-2 rounded-lg border border-gray-200 dark:border-gray-700 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800">
                 Cancel
               </button>
               <button @click="confirmToggleActive"
