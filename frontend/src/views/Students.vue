@@ -1,127 +1,147 @@
 <template>
-  <div>
-    <!-- Header -->
+  <div class="min-h-full bg-[#F7F8F9] dark:bg-gray-950 transition-colors duration-200">
+
+    <!-- ── Page header ──────────────────────────────────────────────────── -->
     <div class="flex items-center justify-between mb-6">
       <div>
-        <h1 class="text-2xl font-bold text-gray-900 dark:text-gray-100">Students</h1>
-        <p class="text-sm text-gray-500 dark:text-gray-400 mt-0.5">Manage and monitor registered students</p>
+        <p class="text-[11px] font-semibold uppercase tracking-widest text-gray-400 dark:text-gray-500 mb-1">Manage</p>
+        <h1 class="text-xl font-bold text-gray-900 dark:text-white">Students</h1>
       </div>
     </div>
 
-    <!-- Filters -->
-    <div class="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-4 mb-5 flex flex-wrap gap-3 items-end">
-      <div class="flex flex-col gap-1 min-w-[160px]">
-        <label class="text-xs font-medium text-gray-600 dark:text-gray-400">Membership</label>
-        <select v-model="filterMembership" @change="handleFilterChange"
-          class="border border-gray-200 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-400 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary">
-          <option value="">All Memberships</option>
-          <option value="normal">Normal</option>
-          <option value="premium">Premium</option>
-        </select>
-      </div>
-      <div class="flex flex-col gap-1 min-w-[140px]">
-        <label class="text-xs font-medium text-gray-600 dark:text-gray-400">Status</label>
-        <select v-model="filterActive" @change="handleFilterChange"
-          class="border border-gray-200 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-400 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary">
-          <option value="">All</option>
-          <option value="true">Active</option>
-          <option value="false">Inactive</option>
-        </select>
-      </div>
-      <div class="flex flex-col gap-1 min-w-[160px]">
-        <label class="text-xs font-medium text-gray-600 dark:text-gray-400">Source</label>
-        <select v-model="filterSource" @change="handleFilterChange"
-          class="border border-gray-200 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-400 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary">
-          <option value="">All Sources</option>
-          <option value="direct_registration">Direct Registration</option>
-          <option value="book_qr">Book QR</option>
-          <option value="manual_upgrade">Manual Upgrade</option>
-        </select>
-      </div>
-      <button v-if="filterMembership || filterActive || filterSource"
-        @click="clearFilters"
-        class="text-sm text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 flex items-center gap-1 px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800">
-        <X class="w-4 h-4" /> Clear
-      </button>
-    </div>
+    <!-- ── List card ────────────────────────────────────────────────────── -->
+    <section class="bg-white dark:bg-gray-900 rounded-2xl border border-gray-300/40 dark:border-gray-800">
 
-    <!-- Table -->
-    <div class="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 overflow-hidden">
-      <table class="w-full text-sm">
-        <thead class="bg-gray-50 dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800">
-          <tr>
-            <th class="text-left px-4 py-3 font-semibold text-gray-600 dark:text-gray-400">Student</th>
-            <th class="text-left px-4 py-3 font-semibold text-gray-600 dark:text-gray-400">Phone</th>
-            <th class="text-left px-4 py-3 font-semibold text-gray-600 dark:text-gray-400">Membership</th>
-            <th class="text-left px-4 py-3 font-semibold text-gray-600 dark:text-gray-400">Source</th>
-            <th class="text-left px-4 py-3 font-semibold text-gray-600 dark:text-gray-400">Status</th>
-            <th class="text-left px-4 py-3 font-semibold text-gray-600 dark:text-gray-400">Joined</th>
-            <th class="text-right px-4 py-3 font-semibold text-gray-600 dark:text-gray-400">Actions</th>
-          </tr>
-        </thead>
-        <tbody>
+      <!-- Toolbar / Filters -->
+      <div class="p-4 border-b border-gray-100 dark:border-gray-800 flex flex-wrap gap-3 items-end">
+        <div class="flex flex-col gap-1 min-w-[160px]">
+          <label class="text-xs font-semibold text-gray-500 dark:text-gray-400">Membership</label>
+          <select v-model="filterMembership" @change="handleFilterChange"
+            class="border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 dark:text-gray-300 rounded-xl px-3 py-2 text-sm outline-none focus:bg-white dark:focus:bg-gray-900 focus:border-primary transition-all duration-150">
+            <option value="">All Memberships</option>
+            <option value="normal">Normal</option>
+            <option value="premium">Premium</option>
+          </select>
+        </div>
+        <div class="flex flex-col gap-1 min-w-[140px]">
+          <label class="text-xs font-semibold text-gray-500 dark:text-gray-400">Status</label>
+          <select v-model="filterActive" @change="handleFilterChange"
+            class="border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 dark:text-gray-300 rounded-xl px-3 py-2 text-sm outline-none focus:bg-white dark:focus:bg-gray-900 focus:border-primary transition-all duration-150">
+            <option value="">All</option>
+            <option value="true">Active</option>
+            <option value="false">Inactive</option>
+          </select>
+        </div>
+        <div class="flex flex-col gap-1 min-w-[160px]">
+          <label class="text-xs font-semibold text-gray-500 dark:text-gray-400">Source</label>
+          <select v-model="filterSource" @change="handleFilterChange"
+            class="border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 dark:text-gray-300 rounded-xl px-3 py-2 text-sm outline-none focus:bg-white dark:focus:bg-gray-900 focus:border-primary transition-all duration-150">
+            <option value="">All Sources</option>
+            <option value="direct_registration">Direct Registration</option>
+            <option value="book_qr">Book QR</option>
+            <option value="manual_upgrade">Manual Upgrade</option>
+          </select>
+        </div>
+        <button v-if="filterMembership || filterActive || filterSource"
+          @click="clearFilters"
+          class="flex items-center gap-1.5 px-3 py-2 rounded-xl border border-gray-200 dark:border-gray-700 text-xs font-semibold text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors duration-150">
+          <X class="w-3.5 h-3.5" /> Clear filters
+        </button>
+        <span v-if="!loading" class="ml-auto text-xs text-gray-400 dark:text-gray-500 whitespace-nowrap self-center">
+          {{ students.length }} result{{ students.length !== 1 ? 's' : '' }}
+        </span>
+      </div>
+
+      <!-- Table -->
+      <div class="overflow-x-auto">
+        <table class="w-full text-sm">
+          <thead>
+            <tr class="border-b border-gray-100 dark:border-gray-800">
+              <th class="px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-widest text-gray-400 dark:text-gray-500">Student</th>
+              <th class="px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-widest text-gray-400 dark:text-gray-500">Phone</th>
+              <th class="px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-widest text-gray-400 dark:text-gray-500">Membership</th>
+              <th class="px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-widest text-gray-400 dark:text-gray-500">Source</th>
+              <th class="px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-widest text-gray-400 dark:text-gray-500">Status</th>
+              <th class="px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-widest text-gray-400 dark:text-gray-500">Joined</th>
+              <th class="px-4 py-3 w-20" />
+            </tr>
+          </thead>
+
+          <!-- Loading -->
           <TableSkeleton v-if="loading" :rows="8" :cols="7" />
 
-          <tr v-else-if="students.length === 0">
-            <td colspan="7" class="text-center py-16 text-gray-400">
-              <Users class="w-10 h-10 mx-auto mb-3 text-gray-300" />
-              <p class="font-medium">No students found</p>
-              <p class="text-xs mt-1">Try adjusting the filters above</p>
-            </td>
-          </tr>
+          <!-- Empty -->
+          <tbody v-else-if="students.length === 0">
+            <tr>
+              <td colspan="7" class="px-4 py-16 text-center">
+                <div class="flex flex-col items-center gap-2">
+                  <div class="w-12 h-12 rounded-2xl bg-gray-100 dark:bg-gray-800 flex items-center justify-center">
+                    <Users class="w-5 h-5 text-gray-400 dark:text-gray-600" />
+                  </div>
+                  <p class="text-sm font-semibold text-gray-500 dark:text-gray-400">No students found</p>
+                  <p class="text-xs text-gray-400 dark:text-gray-500">Try adjusting the filters above</p>
+                </div>
+              </td>
+            </tr>
+          </tbody>
 
-          <tr v-else v-for="student in students" :key="student.id"
-            class="border-b border-gray-100 dark:border-gray-800 last:border-0 hover:bg-gray-50/50 dark:hover:bg-gray-800/50 transition-colors">
-            <td class="px-4 py-3">
-              <div class="flex items-center gap-3">
-                <div class="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
-                  <span class="text-xs font-semibold text-primary">{{ initials(student.name) }}</span>
+          <!-- Data -->
+          <tbody v-else>
+            <tr v-for="student in students" :key="student.id"
+              class="border-b border-gray-50 dark:border-gray-800/60 last:border-0 hover:bg-gray-50/60 dark:hover:bg-gray-800/30 transition-colors duration-100 group">
+              <td class="px-4 py-3.5">
+                <div class="flex items-center gap-3">
+                  <div class="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
+                    <span class="text-xs font-semibold text-primary">{{ initials(student.name) }}</span>
+                  </div>
+                  <div>
+                    <p class="font-semibold text-gray-800 dark:text-gray-100">{{ student.name }}</p>
+                    <p class="text-xs text-gray-400 dark:text-gray-500">{{ student.email }}</p>
+                  </div>
                 </div>
-                <div>
-                  <p class="font-medium text-gray-900 dark:text-gray-100">{{ student.name }}</p>
-                  <p class="text-xs text-gray-500 dark:text-gray-400">{{ student.email }}</p>
+              </td>
+              <td class="px-4 py-3.5 text-xs text-gray-400 dark:text-gray-500 whitespace-nowrap">{{ student.phone || '—' }}</td>
+              <td class="px-4 py-3.5">
+                <span :class="['inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-medium',
+                  student.membershipType === 'premium'
+                    ? 'bg-primary/8 dark:bg-primary/15 text-primary'
+                    : 'bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400']">
+                  <Star v-if="student.membershipType === 'premium'" class="w-3 h-3" />
+                  {{ student.membershipType === 'premium' ? 'Premium' : 'Normal' }}
+                </span>
+              </td>
+              <td class="px-4 py-3.5 text-xs text-gray-400 dark:text-gray-500">{{ formatSource(student.membershipSource) }}</td>
+              <td class="px-4 py-3.5">
+                <span :class="['inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-medium',
+                  student.isActive
+                    ? 'bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-400'
+                    : 'bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400']">
+                  {{ student.isActive ? 'Active' : 'Inactive' }}
+                </span>
+              </td>
+              <td class="px-4 py-3.5 text-xs text-gray-400 dark:text-gray-500 whitespace-nowrap">{{ formatDate(student.createdAt) }}</td>
+              <td class="px-4 py-3.5">
+                <div class="flex items-center gap-1 justify-end opacity-0 group-hover:opacity-100 transition-opacity duration-150">
+                  <button @click="viewStudent(student)"
+                    class="w-8 h-8 rounded-lg flex items-center justify-center text-gray-400 hover:text-primary hover:bg-primary/8 dark:hover:bg-primary/15 transition-colors duration-150"
+                    title="View Details">
+                    <Eye class="w-3.5 h-3.5" />
+                  </button>
+                  <button @click="promptToggleActive(student)"
+                    :class="['w-8 h-8 rounded-lg flex items-center justify-center transition-colors duration-150',
+                      student.isActive
+                        ? 'text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10'
+                        : 'text-gray-400 hover:text-green-600 hover:bg-green-50 dark:hover:bg-green-500/10']"
+                    :title="student.isActive ? 'Deactivate' : 'Activate'">
+                    <UserX v-if="student.isActive" class="w-3.5 h-3.5" />
+                    <UserCheck v-else class="w-3.5 h-3.5" />
+                  </button>
                 </div>
-              </div>
-            </td>
-            <td class="px-4 py-3 text-gray-600 dark:text-gray-400">{{ student.phone || '—' }}</td>
-            <td class="px-4 py-3">
-              <span :class="['inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium',
-                student.membershipType === 'premium'
-                  ? 'bg-primary/10 text-primary'
-                  : 'bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300']">
-                <Star v-if="student.membershipType === 'premium'" class="w-3 h-3" />
-                {{ student.membershipType === 'premium' ? 'Premium' : 'Normal' }}
-              </span>
-            </td>
-            <td class="px-4 py-3 text-gray-600 dark:text-gray-400 text-xs">{{ formatSource(student.membershipSource) }}</td>
-            <td class="px-4 py-3">
-              <span :class="['inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium',
-                student.isActive ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-600']">
-                {{ student.isActive ? 'Active' : 'Inactive' }}
-              </span>
-            </td>
-            <td class="px-4 py-3 text-gray-500 text-xs">{{ formatDate(student.createdAt) }}</td>
-            <td class="px-4 py-3">
-              <div class="flex items-center justify-end gap-1">
-                <button @click="viewStudent(student)"
-                  class="p-1.5 rounded-lg text-gray-400 hover:text-primary hover:bg-primary/10 transition-colors"
-                  title="View Details">
-                  <Eye class="w-4 h-4" />
-                </button>
-                <button @click="promptToggleActive(student)"
-                  :class="['p-1.5 rounded-lg transition-colors',
-                    student.isActive
-                      ? 'text-gray-400 hover:text-red-600 hover:bg-red-50'
-                      : 'text-gray-400 hover:text-green-600 hover:bg-green-50']"
-                  :title="student.isActive ? 'Deactivate' : 'Activate'">
-                  <UserX v-if="student.isActive" class="w-4 h-4" />
-                  <UserCheck v-else class="w-4 h-4" />
-                </button>
-              </div>
-            </td>
-          </tr>
-        </tbody>
-      </table>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
 
       <TablePagination
         v-if="!loading"
@@ -131,7 +151,7 @@
         @prev="prevPage"
         @next="nextPage"
       />
-    </div>
+    </section>
 
     <!-- Toggle Active Confirmation Modal -->
     <Teleport to="body">

@@ -1,173 +1,188 @@
 <template>
-  <div>
-    <!-- Header -->
+  <div class="min-h-full bg-[#F7F8F9] dark:bg-gray-950 transition-colors duration-200">
+
+    <!-- ── Page header ──────────────────────────────────────────────────── -->
     <div class="flex flex-wrap items-center justify-between gap-3 mb-6">
       <div>
-        <h1 class="text-2xl font-bold text-gray-900 dark:text-white">Book Codes</h1>
-        <p class="text-sm text-gray-500 dark:text-gray-400 mt-0.5">Generate and manage premium activation codes</p>
+        <p class="text-[11px] font-semibold uppercase tracking-widest text-gray-400 dark:text-gray-500 mb-1">Manage</p>
+        <h1 class="text-xl font-bold text-gray-900 dark:text-white">Book Codes</h1>
       </div>
       <div class="flex items-center gap-2 flex-wrap">
         <Transition name="fade">
           <button v-if="selectedCodes.size > 0"
             @click="downloadQrCodes"
             :disabled="generatingQr"
-            class="flex items-center gap-2 px-4 py-2 rounded-xl bg-primary text-white text-sm font-semibold hover:bg-primary/90 transition-colors disabled:opacity-60">
+            class="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-primary text-white text-sm font-semibold hover:bg-primary/90 active:scale-[0.98] transition-all duration-150 disabled:opacity-60">
             <ImageDown class="w-4 h-4" />
             <span v-if="generatingQr">{{ qrProgress.current }}/{{ qrProgress.total }}…</span>
             <span v-else>Create QR Codes ({{ selectedCodes.size }})</span>
           </button>
         </Transition>
         <button @click="openGenerate"
-          class="flex items-center gap-2 px-4 py-2 rounded-xl bg-primary text-white text-sm font-semibold hover:bg-primary/90 transition-colors">
+          class="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-primary text-white text-sm font-semibold hover:bg-primary/90 active:scale-[0.98] transition-all duration-150">
           <Plus class="w-4 h-4" /> Generate Code
         </button>
         <button @click="openBulk"
-          class="flex items-center gap-2 px-4 py-2 rounded-xl border border-primary text-primary text-sm font-semibold hover:bg-primary/5 transition-colors">
+          class="flex items-center gap-2 px-4 py-2.5 rounded-xl border border-primary text-primary text-sm font-semibold hover:bg-primary/5 active:scale-[0.98] transition-all duration-150">
           <Layers class="w-4 h-4" /> Bulk Generate
         </button>
         <button @click="handleExport" :disabled="exporting"
-          class="flex items-center gap-2 px-4 py-2 rounded-xl border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 text-sm font-semibold hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors disabled:opacity-60">
+          class="flex items-center gap-2 px-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300 text-sm font-semibold hover:bg-gray-100 dark:hover:bg-gray-800 active:scale-[0.98] transition-all duration-150 disabled:opacity-60">
           <Download class="w-4 h-4" />
           {{ exporting ? 'Exporting…' : 'Export CSV' }}
         </button>
       </div>
     </div>
 
-    <!-- Status filter tabs -->
-    <div class="flex items-center gap-1 bg-gray-100 dark:bg-gray-800 rounded-xl p-1 mb-5 overflow-x-auto w-fit">
-      <button v-for="tab in statusTabs" :key="tab.value"
-        @click="setStatusFilter(tab.value)"
-        :class="['px-4 py-1.5 rounded-lg text-sm font-medium whitespace-nowrap transition-colors',
-          activeStatus === tab.value
-            ? 'bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 shadow-sm'
-            : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200']">
-        {{ tab.label }}
-      </button>
-    </div>
+    <!-- ── List card ────────────────────────────────────────────────────── -->
+    <section class="bg-white dark:bg-gray-900 rounded-2xl border border-gray-300/40 dark:border-gray-800">
 
-    <!-- Export error -->
-    <div v-if="exportError" class="mb-4 px-4 py-3 bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 rounded-xl text-sm flex items-center gap-2">
-      <AlertCircle class="w-4 h-4 shrink-0" />
-      {{ exportError }}
-    </div>
+      <!-- Toolbar: status tabs + export error -->
+      <div class="p-4 border-b border-gray-100 dark:border-gray-800 flex flex-wrap items-center gap-3">
+        <div class="flex items-center gap-1 bg-gray-100 dark:bg-gray-800 rounded-xl p-1 overflow-x-auto">
+          <button v-for="tab in statusTabs" :key="tab.value"
+            @click="setStatusFilter(tab.value)"
+            :class="['px-4 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition-colors duration-150',
+              activeStatus === tab.value
+                ? 'bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 shadow-sm'
+                : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200']">
+            {{ tab.label }}
+          </button>
+        </div>
+        <div v-if="exportError" class="flex items-center gap-2 px-3 py-1.5 bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 rounded-xl text-xs">
+          <AlertCircle class="w-3.5 h-3.5 shrink-0" />
+          {{ exportError }}
+        </div>
+      </div>
 
-    <!-- Table -->
-    <div class="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 overflow-hidden">
-      <table class="w-full text-sm">
-        <thead class="bg-gray-50 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
-          <tr>
-            <th class="px-4 py-3 w-10">
-              <input type="checkbox"
-                :checked="allUnusedSelected"
-                :indeterminate="selectedCodes.size > 0 && !allUnusedSelected"
-                @change="toggleAllUnused"
-                :disabled="unusedInView.length === 0"
-                class="w-4 h-4 rounded border-gray-300 text-primary accent-primary cursor-pointer disabled:opacity-40"
-                title="Select all unused codes" />
-            </th>
-            <th class="text-left px-4 py-3 font-semibold text-gray-600 dark:text-gray-400">Code</th>
-            <th class="text-left px-4 py-3 font-semibold text-gray-600 dark:text-gray-400">Status</th>
-            <th class="text-left px-4 py-3 font-semibold text-gray-600 dark:text-gray-400">Used At</th>
-            <th class="text-left px-4 py-3 font-semibold text-gray-600 dark:text-gray-400">Expires At</th>
-            <th class="text-left px-4 py-3 font-semibold text-gray-600 dark:text-gray-400">Created</th>
-            <th class="text-right px-4 py-3 font-semibold text-gray-600 dark:text-gray-400">Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          <TableSkeleton v-if="loading" :rows="8" :cols="8" />
+      <!-- Table -->
+      <div class="overflow-x-auto">
+        <table class="w-full text-sm">
+          <thead>
+            <tr class="border-b border-gray-100 dark:border-gray-800">
+              <th class="px-4 py-3 w-10">
+                <input type="checkbox"
+                  :checked="allUnusedSelected"
+                  :indeterminate="selectedCodes.size > 0 && !allUnusedSelected"
+                  @change="toggleAllUnused"
+                  :disabled="unusedInView.length === 0"
+                  class="w-4 h-4 rounded border-gray-300 text-primary accent-primary cursor-pointer disabled:opacity-40"
+                  title="Select all unused codes" />
+              </th>
+              <th class="px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-widest text-gray-400 dark:text-gray-500">Code</th>
+              <th class="px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-widest text-gray-400 dark:text-gray-500">Status</th>
+              <th class="px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-widest text-gray-400 dark:text-gray-500">Used At</th>
+              <th class="px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-widest text-gray-400 dark:text-gray-500">Expires At</th>
+              <th class="px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-widest text-gray-400 dark:text-gray-500">Created</th>
+              <th class="px-4 py-3 w-24" />
+            </tr>
+          </thead>
 
-          <tr v-else-if="codes.length === 0">
-            <td colspan="8" class="text-center py-16 text-gray-400 dark:text-gray-500">
-              <QrCode class="w-10 h-10 mx-auto mb-3 text-gray-300 dark:text-gray-600" />
-              <p class="font-medium">No book codes found</p>
-              <p class="text-xs mt-1">
-                {{ activeStatus ? `No ${activeStatus} codes.` : 'Generate your first code above.' }}
-              </p>
-            </td>
-          </tr>
+          <!-- Loading -->
+          <TableSkeleton v-if="loading" :rows="8" :cols="7" />
 
-          <tr v-else v-for="code in codes" :key="code.id"
-            :class="['border-b border-gray-100 dark:border-gray-800 last:border-0 transition-colors',
-              selectedCodes.has(code.code) ? 'bg-primary/5 dark:bg-primary/10' : 'hover:bg-gray-50/50 dark:hover:bg-gray-800/50']">
-            <!-- Checkbox -->
-            <td class="px-4 py-3 w-10">
-              <input v-if="code.status === 'unused'"
-                type="checkbox"
-                :checked="selectedCodes.has(code.code)"
-                @change="toggleCode(code.code)"
-                class="w-4 h-4 rounded border-gray-300 text-primary accent-primary cursor-pointer" />
-            </td>
-            <!-- Code -->
-            <td class="px-4 py-3">
-              <div class="flex items-center gap-2">
-                <span class="font-mono font-semibold text-gray-900 dark:text-gray-100 tracking-wider">{{ code.code }}</span>
-                <button @click="copyText(code.code, code.id + '-code')"
-                  class="p-1 rounded text-gray-400 hover:text-primary hover:bg-primary/10 transition-colors"
-                  :title="copied === code.id + '-code' ? 'Copied!' : 'Copy code'">
-                  <CheckCheck v-if="copied === code.id + '-code'" class="w-3.5 h-3.5 text-green-500" />
-                  <Copy v-else class="w-3.5 h-3.5" />
-                </button>
-              </div>
-            </td>
+          <!-- Empty -->
+          <tbody v-else-if="codes.length === 0">
+            <tr>
+              <td colspan="7" class="px-4 py-16 text-center">
+                <div class="flex flex-col items-center gap-2">
+                  <div class="w-12 h-12 rounded-2xl bg-gray-100 dark:bg-gray-800 flex items-center justify-center">
+                    <QrCode class="w-5 h-5 text-gray-400 dark:text-gray-600" />
+                  </div>
+                  <p class="text-sm font-semibold text-gray-500 dark:text-gray-400">No book codes found</p>
+                  <p class="text-xs text-gray-400 dark:text-gray-500">
+                    {{ activeStatus ? `No ${activeStatus} codes yet.` : 'Generate your first code above.' }}
+                  </p>
+                </div>
+              </td>
+            </tr>
+          </tbody>
 
-            <!-- Status badge -->
-            <td class="px-4 py-3">
-              <span :class="['inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold', statusClass(code.status)]">
-                <span class="w-1.5 h-1.5 rounded-full bg-current opacity-70" />
-                {{ code.status }}
-              </span>
-            </td>
+          <!-- Data -->
+          <tbody v-else>
+            <tr v-for="code in codes" :key="code.id"
+              :class="['border-b border-gray-50 dark:border-gray-800/60 last:border-0 transition-colors duration-100 group',
+                selectedCodes.has(code.code) ? 'bg-primary/5 dark:bg-primary/10' : 'hover:bg-gray-50/60 dark:hover:bg-gray-800/30']">
 
-           
+              <!-- Checkbox -->
+              <td class="px-4 py-3.5 w-10">
+                <input v-if="code.status === 'unused'"
+                  type="checkbox"
+                  :checked="selectedCodes.has(code.code)"
+                  @change="toggleCode(code.code)"
+                  class="w-4 h-4 rounded border-gray-300 text-primary accent-primary cursor-pointer" />
+              </td>
 
-            <!-- Used At -->
-            <td class="px-4 py-3 text-xs text-gray-500 dark:text-gray-400">
-              {{ code.usedAt ? formatDate(code.usedAt) : '—' }}
-            </td>
+              <!-- Code -->
+              <td class="px-4 py-3.5">
+                <div class="flex items-center gap-2">
+                  <span class="font-mono font-semibold text-gray-800 dark:text-gray-100 tracking-wider">{{ code.code }}</span>
+                  <button @click="copyText(code.code, code.id + '-code')"
+                    class="p-1 rounded-md text-gray-300 dark:text-gray-600 hover:text-primary hover:bg-primary/8 dark:hover:bg-primary/15 transition-colors duration-150"
+                    :title="copied === code.id + '-code' ? 'Copied!' : 'Copy code'">
+                    <CheckCheck v-if="copied === code.id + '-code'" class="w-3.5 h-3.5 text-green-500" />
+                    <Copy v-else class="w-3.5 h-3.5" />
+                  </button>
+                </div>
+              </td>
 
-            <!-- Expires At -->
-            <td class="px-4 py-3 text-xs">
-              <span v-if="!code.expiresAt" class="text-gray-400 dark:text-gray-500">No expiry</span>
-              <span v-else :class="isExpired(code.expiresAt) ? 'text-red-500' : 'text-gray-600 dark:text-gray-400'">
-                {{ formatDate(code.expiresAt) }}
-              </span>
-            </td>
+              <!-- Status badge -->
+              <td class="px-4 py-3.5">
+                <span :class="['inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-medium', statusClass(code.status)]">
+                  <span class="w-1.5 h-1.5 rounded-full bg-current opacity-70" />
+                  {{ code.status }}
+                </span>
+              </td>
 
-            <!-- Created -->
-            <td class="px-4 py-3 text-xs text-gray-500 dark:text-gray-400">{{ formatDate(code.createdAt) }}</td>
+              <!-- Used At -->
+              <td class="px-4 py-3.5 text-xs text-gray-400 dark:text-gray-500 whitespace-nowrap">
+                {{ code.usedAt ? formatDate(code.usedAt) : '—' }}
+              </td>
 
-            <!-- Actions -->
-            <td class="px-4 py-3">
-              <div class="flex items-center justify-end gap-1">
-                <button v-if="code.status === 'blocked' || code.status === 'expired'"
-                  @click="promptStatusChange(code, 'unused')"
-                  class="p-1.5 rounded-lg text-gray-400 hover:text-green-600 hover:bg-green-50 dark:hover:bg-green-900/20 transition-colors"
-                  title="Reactivate (set to Unused)">
-                  <RotateCcw class="w-4 h-4" />
-                </button>
-                <button v-if="code.status !== 'blocked' && code.status !== 'used'"
-                  @click="promptStatusChange(code, 'blocked')"
-                  class="p-1.5 rounded-lg text-gray-400 hover:text-orange-600 hover:bg-orange-50 dark:hover:bg-orange-900/20 transition-colors"
-                  title="Block code">
-                  <Ban class="w-4 h-4" />
-                </button>
-                <button v-if="code.status === 'used'"
-                  @click="promptStatusChange(code, 'blocked')"
-                  class="p-1.5 rounded-lg text-gray-400 hover:text-orange-600 hover:bg-orange-50 dark:hover:bg-orange-900/20 transition-colors"
-                  title="Block code">
-                  <Ban class="w-4 h-4" />
-                </button>
-                <button v-if="!code.usedByUserId"
-                  @click="promptDelete(code)"
-                  class="p-1.5 rounded-lg text-gray-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
-                  title="Delete code">
-                  <Trash2 class="w-4 h-4" />
-                </button>
-              </div>
-            </td>
-          </tr>
-        </tbody>
-      </table>
+              <!-- Expires At -->
+              <td class="px-4 py-3.5 text-xs whitespace-nowrap">
+                <span v-if="!code.expiresAt" class="text-gray-400 dark:text-gray-500">No expiry</span>
+                <span v-else :class="isExpired(code.expiresAt) ? 'text-red-500' : 'text-gray-400 dark:text-gray-500'">
+                  {{ formatDate(code.expiresAt) }}
+                </span>
+              </td>
+
+              <!-- Created -->
+              <td class="px-4 py-3.5 text-xs text-gray-400 dark:text-gray-500 whitespace-nowrap">{{ formatDate(code.createdAt) }}</td>
+
+              <!-- Actions -->
+              <td class="px-4 py-3.5">
+                <div class="flex items-center gap-1 justify-end opacity-0 group-hover:opacity-100 transition-opacity duration-150">
+                  <button v-if="code.status === 'blocked' || code.status === 'expired'"
+                    @click="promptStatusChange(code, 'unused')"
+                    class="w-8 h-8 rounded-lg flex items-center justify-center text-gray-400 hover:text-green-600 hover:bg-green-50 dark:hover:bg-green-500/10 transition-colors duration-150"
+                    title="Reactivate (set to Unused)">
+                    <RotateCcw class="w-3.5 h-3.5" />
+                  </button>
+                  <button v-if="code.status !== 'blocked' && code.status !== 'used'"
+                    @click="promptStatusChange(code, 'blocked')"
+                    class="w-8 h-8 rounded-lg flex items-center justify-center text-gray-400 hover:text-orange-500 hover:bg-orange-50 dark:hover:bg-orange-500/10 transition-colors duration-150"
+                    title="Block code">
+                    <Ban class="w-3.5 h-3.5" />
+                  </button>
+                  <button v-if="code.status === 'used'"
+                    @click="promptStatusChange(code, 'blocked')"
+                    class="w-8 h-8 rounded-lg flex items-center justify-center text-gray-400 hover:text-orange-500 hover:bg-orange-50 dark:hover:bg-orange-500/10 transition-colors duration-150"
+                    title="Block code">
+                    <Ban class="w-3.5 h-3.5" />
+                  </button>
+                  <button v-if="!code.usedByUserId"
+                    @click="promptDelete(code)"
+                    class="w-8 h-8 rounded-lg flex items-center justify-center text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 transition-colors duration-150"
+                    title="Delete code">
+                    <Trash2 class="w-3.5 h-3.5" />
+                  </button>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
 
       <TablePagination
         v-if="!loading"
@@ -177,7 +192,7 @@
         @prev="prevPage"
         @next="nextPage"
       />
-    </div>
+    </section>
 
     <!-- ── Generate Single Code Modal ───────────────────────────────────── -->
     <Teleport to="body">
