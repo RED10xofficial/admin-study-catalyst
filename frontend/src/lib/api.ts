@@ -591,6 +591,77 @@ export function getStudentProgressApi(id: string) {
 }
 
 // ---------------------------------------------------------------------------
+// Book Codes
+// ---------------------------------------------------------------------------
+
+export interface BookCode {
+  id: string
+  code: string
+  qrUrl: string
+  status: 'unused' | 'used' | 'expired' | 'blocked'
+  usedByUserId: string | null
+  usedAt: string | null
+  expiresAt: string | null
+  createdAt: string
+}
+
+export interface BookCodeListParams {
+  status?: 'unused' | 'used' | 'expired' | 'blocked'
+  page?: number
+  limit?: number
+}
+
+export function listBookCodes(params: BookCodeListParams = {}) {
+  const q = new URLSearchParams()
+  if (params.status) q.set('status', params.status)
+  if (params.page !== undefined) q.set('page', String(params.page))
+  if (params.limit !== undefined) q.set('limit', String(params.limit))
+  const qs = q.toString()
+  return apiFetch<{ bookCodes: BookCode[] }>(`/book-codes${qs ? `?${qs}` : ''}`, {
+    token: getToken(),
+  })
+}
+
+export function generateCodeApi(expiresAt?: string) {
+  const body = expiresAt ? { expiresAt } : {}
+  return apiFetch<{ bookCode: BookCode }>('/book-codes', {
+    method: 'POST',
+    body,
+    token: getToken(),
+  })
+}
+
+export function bulkGenerateCodesApi(count: number, expiresAt?: string) {
+  const body = expiresAt ? { count, expiresAt } : { count }
+  return apiFetch<{ created: number }>('/book-codes/bulk', {
+    method: 'POST',
+    body,
+    token: getToken(),
+  })
+}
+
+export function updateBookCodeStatus(id: string, status: 'blocked' | 'unused' | 'expired') {
+  return apiFetch<{ bookCode: BookCode }>(`/book-codes/${encodeURIComponent(id)}`, {
+    method: 'PATCH',
+    body: { status },
+    token: getToken(),
+  })
+}
+
+export function deleteBookCodeApi(id: string) {
+  return apiFetch<null>(`/book-codes/${encodeURIComponent(id)}`, {
+    method: 'DELETE',
+    token: getToken(),
+  })
+}
+
+export function exportBookCodesApi() {
+  return apiFetch<{ downloadUrl: string }>('/book-codes/export', {
+    token: getToken(),
+  })
+}
+
+// ---------------------------------------------------------------------------
 // Shared utilities
 // ---------------------------------------------------------------------------
 

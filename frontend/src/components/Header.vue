@@ -12,7 +12,7 @@
     </button>
 
     <!-- Right-side controls -->
-    <div class="flex items-center gap-1">
+    <div class="flex items-center gap-3">
       <!-- Theme toggle -->
       <button
         @click="toggle()"

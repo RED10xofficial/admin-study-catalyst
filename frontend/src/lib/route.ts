@@ -11,4 +11,5 @@ export const ROUTE_NAMES = {
   QUESTIONS: 'questions',
   STUDENTS: 'students',
   STUDENT_DETAIL: 'student-detail',
+  BOOK_CODES: 'book-codes',
 }

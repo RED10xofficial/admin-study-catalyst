@@ -21,7 +21,7 @@
 </template>
 
 <script setup lang="ts">
-import { LayoutDashboard, ClipboardList, ListOrdered, HelpCircle, GraduationCap, Users } from '@lucide/vue'
+import { LayoutDashboard, ClipboardList, ListOrdered, HelpCircle, GraduationCap, Users, QrCode } from '@lucide/vue'
 import { ROUTE_NAMES } from '@/lib/route'
 
 const navItems = [
@@ -31,5 +31,6 @@ const navItems = [
   { label: 'Questions',       to: { name: ROUTE_NAMES.QUESTION_LIST },   icon: HelpCircle },
   { label: 'Exam Questions',  to: { name: ROUTE_NAMES.EXAM_QUESTIONS },  icon: GraduationCap },
   { label: 'Students',        to: { name: ROUTE_NAMES.STUDENTS },        icon: Users },
+  { label: 'Book Codes',      to: { name: ROUTE_NAMES.BOOK_CODES },      icon: QrCode },
 ]
 </script>
