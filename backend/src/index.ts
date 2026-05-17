@@ -18,6 +18,7 @@ import { questionsApp } from './modules/questions/questions.routes';
 import { unitsApp } from './modules/units/units.routes';
 import { uploadApp } from './modules/upload/upload.routes';
 import { progressApp } from './modules/progress/progress.routes';
+import { studentExamTypesApp } from './modules/student-exam-types/student-exam-types.routes';
 
 const app = new Hono<{ Bindings: Bindings }>();
 
@@ -26,6 +27,7 @@ app.get('/openapi.json', (c) => c.json(openApiDocument));
 app.get('/docs', swaggerUI({ url: '/openapi.json' }));
 app.get('/health', (c) => c.json({ status: 'ok', ts: new Date().toISOString() }));
 app.route('/auth', authRoutes);
+app.route('/student-exam-types', studentExamTypesApp);
 app.route('/progress', progressApp);
 app.route('/exams', examsApp);
 app.route('/membership', membershipApp);

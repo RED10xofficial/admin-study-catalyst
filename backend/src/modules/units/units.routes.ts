@@ -1,7 +1,7 @@
 import { Hono } from 'hono';
 import { z } from 'zod';
-import { and, eq } from 'drizzle-orm';
-import { questions, units, users } from '@admin-study-catalyst/shared/schema';
+import { and, eq, inArray } from 'drizzle-orm';
+import { questions, units } from '@admin-study-catalyst/shared/schema';
 import {
   COMMON_MESSAGES,
   QUESTION_MESSAGES,
@@ -10,7 +10,7 @@ import {
 import { getDb } from '../../db/client';
 import type { Bindings } from '../../env';
 import { forbidden, notFound, unauthorized } from '../../lib/errors';
-import { kvGet, kvKeys, kvSet, TTL_30S } from '../../lib/kv';
+import { getMembership } from '../../lib/membership';
 import { authMiddleware } from '../../middleware/auth';
 import { requireRole } from '../../middleware/rbac';
 import {
@@ -22,6 +22,7 @@ import type { ApiError, ApiResponse } from '@admin-study-catalyst/shared/types';
 import { zValidate } from '../../lib/validated';
 import { created, deleted, ok } from '../../lib/response';
 import { createUnit, listUnits, getUnit, updateUnit, deleteUnit } from './units.service';
+import { getStudentExamTypeIds } from '../student-exam-types/student-exam-types.service';
 
 const unitsApp = new Hono<{
   Bindings: Bindings;
@@ -29,25 +30,6 @@ const unitsApp = new Hono<{
 }>();
 
 unitsApp.use('*', authMiddleware);
-
-async function getMembership(c: {
-  env: Bindings;
-  get: (key: 'userId') => string;
-}): Promise<'normal' | 'premium'> {
-  const userId = c.get('userId');
-  let membership = await kvGet(c.env.KV, kvKeys.userMembership(userId));
-  if (!membership) {
-    const db = getDb(c.env.DB);
-    const user = await db
-      .select({ membershipType: users.membershipType })
-      .from(users)
-      .where(eq(users.id, userId))
-      .get();
-    membership = user?.membershipType ?? 'normal';
-    await kvSet(c.env.KV, kvKeys.userMembership(userId), membership, TTL_30S);
-  }
-  return membership as 'normal' | 'premium';
-}
 
 // GET / serves admin (full list) and student (membership-filtered list)
 unitsApp.get('/', async (c) => {
@@ -86,7 +68,7 @@ unitsApp.get('/', async (c) => {
 
   if (roleResult.role === 'student') {
     const { examTypeId } = z.object({ examTypeId: z.string().optional() }).parse(c.req.query());
-    const membership = await getMembership(c);
+    const membership = await getMembership(c.env, userId);
     const db = getDb(c.env.DB);
 
     const conditions = [eq(units.isDeleted, false)];
@@ -103,9 +85,28 @@ unitsApp.get('/', async (c) => {
   throw forbidden('Access denied');
 });
 
+unitsApp.get('/my-units', requireRole('student'), async (c) => {
+  const userId = c.get('userId');
+  const membership = await getMembership(c.env, userId);
+  const examTypeIds = await getStudentExamTypeIds(getDb(c.env.DB), userId);
+  if (examTypeIds.length === 0) {
+    return ok(c, { units: [] }, UNIT_MESSAGES.MY_UNITS_LISTED);
+  }
+
+  const db = getDb(c.env.DB);
+  const conditions = [eq(units.isDeleted, false), inArray(units.examTypeId, examTypeIds)];
+  if (membership === 'normal') conditions.push(eq(units.accessType, 'free'));
+
+  const unitList = await db
+    .select()
+    .from(units)
+    .where(and(...conditions));
+  return ok(c, { units: unitList }, UNIT_MESSAGES.MY_UNITS_LISTED);
+});
+
 // Student-only: get questions for a unit
 unitsApp.get('/:id/questions', requireRole('student'), async (c) => {
-  const membership = await getMembership(c);
+  const membership = await getMembership(c.env, c.get('userId'));
   const db = getDb(c.env.DB);
   const unitId = c.req.param('id');
 

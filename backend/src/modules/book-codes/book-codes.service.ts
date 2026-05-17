@@ -124,7 +124,6 @@ export async function exportCodesToR2(db: Db, env: Bindings): Promise<string> {
       'R2_PRESIGN_CONFIG',
     );
   }
-
   const allCodes = await db.select().from(bookCodes);
   const csv = ['id,code,qr_url,status,used_at,expires_at,created_at']
     .concat(
@@ -134,7 +133,6 @@ export async function exportCodesToR2(db: Db, env: Bindings): Promise<string> {
       ),
     )
     .join('\n');
-
   const key = `exports/book-codes-${now()}.csv`;
   await env.R2.put(key, csv, { httpMetadata: { contentType: 'text/csv' } });
   return presignR2Get(cfg, key, 60 * 60 * 24);

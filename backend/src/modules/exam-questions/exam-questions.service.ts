@@ -5,8 +5,13 @@ import {
   questionStatistics,
   studentExamAnswers,
   studentExams,
+  units,
 } from '@admin-study-catalyst/shared/schema';
-import type { QuestionDifficulty } from '@admin-study-catalyst/shared';
+import {
+  QUESTION_DIFFICULTY_VALUES,
+  type QuestionDifficulty,
+  type QuestionDifficultyValue,
+} from '@admin-study-catalyst/shared';
 import type {
   CreateExamQuestionInput,
   UpdateExamQuestionInput,
@@ -160,4 +165,82 @@ export async function deleteExamQuestion(db: Db, id: string) {
   } else {
     await db.delete(examQuestions).where(eq(examQuestions.id, id));
   }
+}
+
+// ---------------------------------------------------------------------------
+// Bulk import
+// ---------------------------------------------------------------------------
+
+export type ParsedBulkExamQuestionRow = {
+  question: string;
+  option1: string;
+  option2: string;
+  option3: string;
+  option4: string;
+  correctAnswer: string;
+  shortDescription?: string;
+  /** Lowercase difficulty from Excel row, or empty to use form default */
+  difficulty: string;
+};
+
+export async function bulkUploadExamQuestions(
+  db: Db,
+  params: {
+    unitId: string;
+    defaultDifficulty: QuestionDifficultyValue;
+    defaultAccessType?: 'free' | 'premium' | null;
+    rows: ParsedBulkExamQuestionRow[];
+  },
+): Promise<{ inserted: number; skipped: number; rowErrors: { row: number; message: string }[] }> {
+  const unitRow = await db
+    .select({ id: units.id })
+    .from(units)
+    .where(and(eq(units.id, params.unitId), eq(units.isDeleted, false)))
+    .get();
+  if (!unitRow) throw notFound('Unit not found');
+
+  let inserted = 0;
+  let skipped = 0;
+  const rowErrors: { row: number; message: string }[] = [];
+  const ts = now();
+
+  for (let i = 0; i < params.rows.length; i++) {
+    const row = params.rows[i];
+    const opts = [row.option1, row.option2, row.option3, row.option4];
+    if (!opts.includes(row.correctAnswer)) {
+      rowErrors.push({ row: i + 2, message: 'correctAnswer must match one of the four options' });
+      skipped++;
+      continue;
+    }
+
+    const cellDifficulty = row.difficulty?.trim();
+    let difficulty: QuestionDifficultyValue = params.defaultDifficulty;
+    if (cellDifficulty) {
+      if (!QUESTION_DIFFICULTY_VALUES.includes(cellDifficulty as QuestionDifficultyValue)) {
+        rowErrors.push({ row: i + 2, message: 'invalid difficulty' });
+        skipped++;
+        continue;
+      }
+      difficulty = cellDifficulty as QuestionDifficultyValue;
+    }
+
+    await db.insert(examQuestions).values({
+      id: generateId(),
+      question: row.question,
+      option1: row.option1,
+      option2: row.option2,
+      option3: row.option3,
+      option4: row.option4,
+      correctAnswer: row.correctAnswer,
+      shortDescription: row.shortDescription ?? null,
+      difficulty,
+      unitId: params.unitId,
+      accessType: params.defaultAccessType ?? null,
+      isDeleted: false,
+      createdAt: ts,
+    });
+    inserted++;
+  }
+
+  return { inserted, skipped, rowErrors };
 }

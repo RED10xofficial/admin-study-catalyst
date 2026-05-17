@@ -8,6 +8,7 @@ import type {
   questions,
   questionStatistics,
   studentExamAnswers,
+  studentExamTypes,
   studentExams,
   studentQuestionProgress,
   units,
@@ -24,3 +25,4 @@ export type StudentQuestionProgress = InferSelectModel<typeof studentQuestionPro
 export type StudentExam = InferSelectModel<typeof studentExams>;
 export type StudentExamAnswer = InferSelectModel<typeof studentExamAnswers>;
 export type QuestionStatistic = InferSelectModel<typeof questionStatistics>;
+export type StudentExamTypeRow = InferSelectModel<typeof studentExamTypes>;

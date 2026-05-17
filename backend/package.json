@@ -10,13 +10,13 @@
     "test:watch": "vitest",
     "db:generate": "drizzle-kit generate",
     "db:migrate:local": "wrangler d1 migrations apply DB --local",
-    "db:migrate:remote": "wrangler d1 migrations apply DB",
+    "db:migrate:remote": "wrangler d1 migrations apply DB --remote",
     "seed:generate": "tsx --env-file=.dev.vars src/db/seed.ts > src/db/seed.sql",
     "seed:local": "wrangler d1 execute DB --local --file=src/db/seed.sql",
-    "seed:remote": "wrangler d1 execute DB --file=src/db/seed.sql",
+    "seed:remote": "wrangler d1 execute DB --remote --file=src/db/seed.sql",
     "seed-data:generate": "tsx --env-file=.dev.vars src/db/seed-data.ts > src/db/seed-data.sql",
     "seed-data:local": "wrangler d1 execute DB --local --file=src/db/seed-data.sql",
-    "seed-data:remote": "wrangler d1 execute DB --file=src/db/seed-data.sql"
+    "seed-data:remote": "wrangler d1 execute DB --remote --file=src/db/seed-data.sql"
   },
   "dependencies": {
     "@admin-study-catalyst/shared": "workspace:*",
@@ -28,6 +28,7 @@
     "jose": "^6.0.10",
     "nanoid": "^5.1.11",
     "qrcode.vue": "^3.9.0",
+    "xlsx": "^0.18.5",
     "zod": "^3.24.0"
   },
   "devDependencies": {

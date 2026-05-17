@@ -8,6 +8,8 @@ const questionFieldsSchema = z.object({
   option4: z.string().min(1),
   correctAnswer: z.string().min(1),
   description: z.string().optional(),
+  imageKey: z.string().optional(),
+  imageMimeType: z.string().optional(),
   audioKey: z.string().optional(),
   mimeType: z.string().optional(),
   unitId: z.string(),
@@ -40,5 +42,12 @@ export const questionListSchema = z.object({
   limit: z.coerce.number().int().min(1).max(100).default(50),
 });
 
+/** Metadata fields parsed from multipart bulk-upload forms (not the Excel file). */
+export const bulkLearningQuestionUploadMetaSchema = z.object({
+  unitId: z.string().min(1),
+  accessType: z.enum(['free', 'premium']).default('free'),
+});
+
 export type CreateQuestionInput = z.infer<typeof createQuestionSchema>;
 export type UpdateQuestionInput = z.infer<typeof updateQuestionSchema>;
+export type BulkLearningQuestionUploadMeta = z.infer<typeof bulkLearningQuestionUploadMetaSchema>;

@@ -44,12 +44,14 @@ authRoutes.post('/register', zValidate('json', registerSchema), async (c) => {
         phone: input.phone,
         password: input.password,
         bookCode: input.bookCode,
+        examTypeIds: input.examTypeIds,
       })
     : await registerDirect(db, {
         name: input.name,
         email: input.email,
         phone: input.phone,
         password: input.password,
+        examTypeIds: input.examTypeIds,
       });
 
   return created(c, { user }, AUTH_MESSAGES.REGISTERED);

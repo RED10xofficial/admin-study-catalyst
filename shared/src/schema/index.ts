@@ -5,5 +5,6 @@ export * from './exam-types';
 export * from './exams';
 export * from './progress';
 export * from './questions';
+export * from './student-exam-types';
 export * from './units';
 export * from './users';

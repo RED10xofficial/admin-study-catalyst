@@ -11,6 +11,7 @@ export const registerSchema = z.object({
     .regex(/[0-9]/, 'Must contain a number')
     .regex(/[^A-Za-z0-9]/, 'Must contain a special character'),
   bookCode: z.string().length(12).toUpperCase().optional(),
+  examTypeIds: z.array(z.string().min(1)).optional(),
 });
 
 export const loginSchema = z.object({

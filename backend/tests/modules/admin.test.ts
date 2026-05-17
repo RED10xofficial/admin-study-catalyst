@@ -9,6 +9,7 @@ async function clearUsersAndRelated() {
   await db.delete(schema.studentExamAnswers);
   await db.delete(schema.studentExams);
   await db.delete(schema.studentQuestionProgress);
+  await db.delete(schema.studentExamTypes);
   await db.delete(schema.questionStatistics);
   await db.delete(schema.examQuestions);
   await db.delete(schema.questions);
@@ -47,7 +48,7 @@ describe('Admin — Student Management', () => {
 
   it('lists all students', async () => {
     const token = await getAdminToken();
-    const res = await SELF.fetch('http://localhost/students', {
+    const res = await SELF.fetch('http://localhost/admin/students', {
       headers: { Authorization: `Bearer ${token}` },
     });
     expect(res.status).toBe(200);
@@ -57,7 +58,7 @@ describe('Admin — Student Management', () => {
 
   it('blocks admin from blocking themselves', async () => {
     const token = await getAdminToken();
-    const res = await SELF.fetch('http://localhost/students/admin-1', {
+    const res = await SELF.fetch('http://localhost/admin/students/admin-1', {
       method: 'PATCH',
       headers: {
         'Content-Type': 'application/json',
@@ -85,7 +86,7 @@ describe('Admin — Student Management', () => {
     });
 
     const token = await getAdminToken();
-    const res = await SELF.fetch(`http://localhost/students/${studentId}`, {
+    const res = await SELF.fetch(`http://localhost/admin/students/${studentId}`, {
       method: 'PATCH',
       headers: {
         'Content-Type': 'application/json',

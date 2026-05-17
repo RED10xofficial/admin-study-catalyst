@@ -5,6 +5,7 @@ export const createUnitSchema = z.object({
   examTypeId: z.string(),
   tags: z.array(z.string()).optional().default([]),
   accessType: z.enum(['free', 'premium']).default('free'),
+  unitSlug: z.string().min(1).max(200).optional(),
   imageKey: z.string().optional(),
   mimeType: z.string().optional(),
 });

@@ -4,6 +4,7 @@ import { examTypes } from './exam-types';
 export const units = sqliteTable('units', {
   id: text('id').primaryKey(),
   unitName: text('unit_name').notNull(),
+  unitSlug: text('unit_slug').unique(),
   imageUrl: text('image_url'),
   examTypeId: text('exam_type_id')
     .notNull()

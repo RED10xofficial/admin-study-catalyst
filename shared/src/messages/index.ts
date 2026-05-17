@@ -1,4 +1,5 @@
 export * from './admin.messages';
+export * from './bulk-upload.messages';
 export * from './auth.messages';
 export * from './book-codes.messages';
 export * from './common.messages';
@@ -8,5 +9,6 @@ export * from './exams.messages';
 export * from './membership.messages';
 export * from './progress.messages';
 export * from './questions.messages';
+export * from './student-exam-types.messages';
 export * from './units.messages';
 export * from './upload.messages';

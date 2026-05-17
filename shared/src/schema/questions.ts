@@ -10,6 +10,7 @@ export const questions = sqliteTable('questions', {
   option4: text('option4').notNull(),
   correctAnswer: text('correct_answer').notNull(),
   description: text('description'), // sanitized HTML
+  imageUrl: text('image_url'),
   audioUrl: text('audio_url'),
   unitId: text('unit_id')
     .notNull()

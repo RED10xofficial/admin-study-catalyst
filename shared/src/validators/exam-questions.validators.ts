@@ -23,5 +23,13 @@ export const examQuestionListSchema = z.object({
   limit: z.coerce.number().int().min(1).max(100).default(50),
 });
 
+/** Metadata fields parsed from multipart exam-question bulk-upload forms. */
+export const bulkExamQuestionUploadMetaSchema = z.object({
+  unitId: z.string().min(1),
+  difficulty: z.nativeEnum(QuestionDifficulty),
+  accessType: z.enum(['free', 'premium']).optional(),
+});
+
 export type CreateExamQuestionInput = z.infer<typeof createExamQuestionSchema>;
 export type UpdateExamQuestionInput = z.infer<typeof updateExamQuestionSchema>;
+export type BulkExamQuestionUploadMeta = z.infer<typeof bulkExamQuestionUploadMetaSchema>;

@@ -11,6 +11,11 @@ describe('API documentation', () => {
     expect(body.paths['/upload/presign']).toBeDefined();
     expect(body.paths['/auth/me']).toBeDefined();
     expect(body.paths['/progress']).toBeDefined();
+    expect(body.paths['/student-exam-types']).toBeDefined();
+    expect(body.paths['/units/my-units']).toBeDefined();
+    expect(body.paths['/questions/bulk']).toBeDefined();
+    expect(body.paths['/exam-questions/bulk']).toBeDefined();
+    expect(body.paths['/admin/students']).toBeDefined();
     expect(body.paths['/exams']).toBeDefined();
   });
 

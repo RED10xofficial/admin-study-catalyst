@@ -1,11 +1,15 @@
+/**
+ * R2 helpers (presign, head, delete, MIME sniff, server-side put).
+ */
 import { AwsClient } from 'aws4fetch';
 import type { R2Bucket } from '@cloudflare/workers-types';
 import { badRequest } from './errors';
 
-export type UploadType = 'unit-image' | 'question-audio';
+export type UploadType = 'unit-image' | 'question-image' | 'question-audio';
 
 const ALLOWED_MIME: Record<UploadType, string[]> = {
   'unit-image': ['image/jpeg', 'image/png', 'image/webp'],
+  'question-image': ['image/jpeg', 'image/png', 'image/webp'],
   'question-audio': ['audio/mpeg', 'audio/mp4', 'audio/ogg', 'audio/wav'],
 };
 
@@ -41,6 +45,17 @@ export async function objectExists(r2: R2Bucket, key: string): Promise<boolean> 
 
 export async function deleteObject(r2: R2Bucket, key: string): Promise<void> {
   await r2.delete(key);
+}
+
+/** Store bytes in R2 (e.g. bulk admin uploads). Validates Content-Type against declared MIME. */
+export async function putR2Object(
+  r2: R2Bucket,
+  key: string,
+  body: ArrayBuffer | Uint8Array,
+  contentType: string,
+): Promise<void> {
+  const buf = body instanceof Uint8Array ? body : new Uint8Array(body);
+  await r2.put(key, buf, { httpMetadata: { contentType } });
 }
 
 function encodeR2Path(key: string): string {

@@ -13,15 +13,15 @@ const apiOverviewMarkdown = [
   'Backend for a **question-driven** medical exam prep product. **Admin** manages all curriculum; **students** learn in order, unlock by answering, and take **premium-only** simulated exams per unit (no retakes).',
   '',
   '### Frontends vs this spec',
-  '- **Student SPA** — use tags *Auth* (session), *Student progress*, *Student exams*, *Student membership*. Send `Authorization: Bearer <access_token>` on protected routes; include cookies for refresh.',
+  '- **Student SPA** — use tags *Auth*, *Student exam types*, *Student progress*, *Student exams*, *Student membership*, *Units* (student-facing list endpoints). Send `Authorization: Bearer <access_token>` on protected routes; include cookies for refresh.',
   '- **Admin SPA** — use *Auth*, *Exam types*, *Units*, *Questions*, *Exam questions*, *Book codes*, *Admin students*, *Admin analytics*, and *Upload* when attaching R2 media.',
   '',
   '### Roles (who can call what)',
   '| Access | Routes |',
   '|--------|--------|',
   '| **Public** (no Bearer) | `GET /health`, `POST /auth/register`, `POST /auth/login`, `POST /auth/refresh` (needs refresh cookie), `POST /auth/logout`, `POST /auth/forgot-password`, `POST /auth/reset-password` |',
-  '| **Student** (Bearer + student role) | `GET /auth/me`, `POST /progress`, `GET /progress/unit/{unitId}`, `GET/POST /exams`, `POST /exams/{id}/submit`, `GET /exams/{id}/questions`, `GET /exams/{id}`, `POST /membership/upgrade` |',
-  '| **Admin** (Bearer + admin role) | Full CRUD under `/exam-types`, `/units`, `/questions`, `/exam-questions`, `/book-codes`; `GET/PATCH /students…`, `GET /analytics/*`; `POST /upload/presign` |',
+  '| **Student** (Bearer + student role) | `GET /auth/me`, `GET /student-exam-types`, `PUT /student-exam-types`, `GET /units/my-units`, `GET /units` (optional `examTypeId`), `GET /units/{id}/questions`, `POST /progress`, `GET /progress/unit/{unitId}`, `GET/POST /exams`, `POST /exams/{id}/submit`, `GET /exams/{id}/questions`, `GET /exams/{id}`, `POST /membership/upgrade` |',
+  '| **Admin** (Bearer + admin role) | Full CRUD under `/exam-types`, `/units`, `/questions`, `/exam-questions`, `/book-codes`; `POST /questions/bulk`, `POST /exam-questions/bulk`; `GET/PATCH /admin/students…`, `GET /admin/analytics/*`; `POST /upload/presign` |',
   '',
   '### Auth model (why tokens look like this)',
   '- **Access JWT** (~15m) returned in JSON — keep **in memory** on the client.',
@@ -29,14 +29,15 @@ const apiOverviewMarkdown = [
   '- **Role and membership are not embedded in JWT claims** for authorization; the Worker loads current role/membership from D1/KV so privileges cannot go stale.',
   '',
   '### Student journey (recommended call order)',
-  '1. **Onboarding:** `POST /auth/register` (optional `bookCode` for premium at signup) or `POST /auth/login`.',
+  '1. **Onboarding:** `POST /auth/register` (optional `bookCode`, optional `examTypeIds`) or `POST /auth/login`.',
   '2. **Shell / routing:** `GET /auth/me` for name, role, membership.',
-  '3. **Learning loop:** Drive UI from question IDs your product surfaces; **`POST /progress`** records any answer (right or wrong) — idempotent; **`422`** if sequential gate fails (previous question not answered). **`GET /progress/unit/{unitId}`** powers progress bars and “unit complete”.',
-  '4. **Premium upgrade after signup:** `POST /membership/upgrade` with 12-char book code.',
-  '5. **Exam simulation (premium):** Requires all learning questions in the unit answered; **`POST /exams`** picks a random subset from the exam bank sized by exam type; **`GET /exams/{id}/questions`** for the attempt UI; **`POST /exams/{id}/submit`** grades and persists analytics. One row per `(student, unit)` — no retakes.',
+  '3. **Exam programs:** `PUT /student-exam-types` to choose exams; load curriculum via **`GET /units/my-units`** (filters by selection + membership).',
+  '4. **Learning loop:** Drive UI from question IDs your product surfaces; **`POST /progress`** records any answer (right or wrong) — idempotent; **`422`** if sequential gate fails (previous question not answered). **`GET /progress/unit/{unitId}`** powers progress bars and “unit complete”.',
+  '5. **Premium upgrade after signup:** `POST /membership/upgrade` with 12-char book code.',
+  '6. **Exam simulation (premium):** Requires all learning questions in the unit answered; **`POST /exams`** picks a random subset from the exam bank sized by exam type; **`GET /exams/{id}/questions`** for the attempt UI; **`POST /exams/{id}/submit`** grades and persists analytics. One row per `(student, unit)` — no retakes.',
   '',
   '### Admin journey (recommended call order)',
-  '1. **Media:** `POST /upload/presign` → PUT file to R2 → pass returned **key** into unit/question payloads.',
+  '1. **Media:** `POST /upload/presign` (unit image, question image, audio) → PUT to R2 → pass **key** into `/units` / `/questions`, or use **`POST /questions/bulk`** (multipart Excel + images/audio). **`POST /exam-questions/bulk`** imports bank rows from one spreadsheet.',
   '2. **Curriculum:** CRUD **exam types** (defines exam length) → **units** under a type → **learning questions** (`sequence_order` defines unlock order) → **exam bank questions** tagged by difficulty for exams.',
   '3. **Codes:** Generate/list/export **book codes** for QR/packaging; patch status when blocking unused codes.',
   '4. **Operations:** **Students** list filters + PATCH membership/active; **Analytics** for membership split and question difficulty/attempt insights.',
@@ -83,9 +84,14 @@ export const openApiDocument = {
         '**Student SPA.** Upgrade existing normal accounts with a printed/book **QR code** string (`POST /membership/upgrade`). Distinct from premium-at-registration via `/auth/register`.',
     },
     {
+      name: 'Student exam types',
+      description:
+        '**Student SPA.** Persist selected exam programs (`PUT /student-exam-types`). Pair with **`GET /units/my-units`** for membership- and selection-filtered units.',
+    },
+    {
       name: 'Upload',
       description:
-        '**Admin SPA while authoring** (and any authenticated caller): presigned **R2 PUT** URLs for unit hero images and learning-question audio — avoids Worker body limits.',
+        '**Admin SPA while authoring** (and any authenticated caller): presigned **R2 PUT** URLs for unit hero images, learning-question images, and audio.',
     },
     {
       name: 'Exam types',
@@ -95,12 +101,12 @@ export const openApiDocument = {
     {
       name: 'Units',
       description:
-        '**Admin SPA.** Learning modules under an exam type; `access_type` free vs premium gates catalog visibility for normal members.',
+        '**Admin CRUD** plus **student** list endpoints: `GET /units`, `GET /units/my-units`, `GET /units/{id}/questions`. `access_type` gates catalog for normal members.',
     },
     {
       name: 'Questions',
       description:
-        '**Admin SPA.** Learning (instructional) MCQs tied to a unit. **`sequence_order`** drives unlock order; reorder endpoint maintains contiguous sequencing before deletes.',
+        '**Admin SPA.** Learning MCQs; **`POST /questions/bulk`** imports many rows + optional media under `{unit_slug}/images|audio/`.',
     },
     {
       name: 'Exam questions',
@@ -622,11 +628,90 @@ export const openApiDocument = {
         },
       },
     },
+    '/student-exam-types': {
+      get: {
+        tags: ['Student exam types'],
+        security: [{ BearerAuth: [] }],
+        summary: 'Get selected exam types',
+        description:
+          '**Roles:** Student. **Use case:** Hydrate chosen programs after login. **Why:** Rows joined from `exam_types` for display.',
+        responses: {
+          '200': {
+            description: 'OK',
+            content: {
+              'application/json': {
+                schema: {
+                  allOf: [
+                    { $ref: '#/components/schemas/ApiEnvelope' },
+                    {
+                      properties: {
+                        data: {
+                          type: 'object',
+                          required: ['examTypes'],
+                          properties: {
+                            examTypes: { type: 'array', items: { type: 'object' } },
+                          },
+                        },
+                      },
+                    },
+                  ],
+                },
+              },
+            },
+          },
+          '401': { $ref: '#/components/responses/Unauthorized' },
+          '403': { $ref: '#/components/responses/Forbidden' },
+        },
+      },
+      put: {
+        tags: ['Student exam types'],
+        security: [{ BearerAuth: [] }],
+        summary: 'Replace selected exam types',
+        description:
+          '**Roles:** Student. **Body:** `examTypeIds` replaces all prior selections (empty array clears). **Why:** Server validates ids exist before writing.',
+        requestBody: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: { $ref: '#/components/schemas/StudentExamTypesPutRequest' },
+            },
+          },
+        },
+        responses: {
+          '200': {
+            description: 'OK',
+            content: {
+              'application/json': {
+                schema: {
+                  allOf: [
+                    { $ref: '#/components/schemas/ApiEnvelope' },
+                    {
+                      properties: {
+                        data: {
+                          type: 'object',
+                          required: ['examTypes'],
+                          properties: {
+                            examTypes: { type: 'array', items: { type: 'object' } },
+                          },
+                        },
+                      },
+                    },
+                  ],
+                },
+              },
+            },
+          },
+          '400': { $ref: '#/components/responses/BadRequest' },
+          '401': { $ref: '#/components/responses/Unauthorized' },
+          '403': { $ref: '#/components/responses/Forbidden' },
+        },
+      },
+    },
     '/upload/presign': {
       post: {
         tags: ['Upload'],
         security: [{ BearerAuth: [] }],
-        summary: 'Presign R2 upload (unit image or question audio)',
+        summary: 'Presign R2 upload (unit image, question image, or question audio)',
         description:
           '**Roles:** Authenticated user (typically **Admin SPA** during authoring). **Use case:** Step 1 of media pipeline — PUT bytes straight to R2, then embed returned **key** into `/units` or `/questions`. **Why:** Worker avoids streaming large bodies; MIME allowlists mirror LMS security spec. Requires `R2_ACCOUNT_ID`, `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`, `R2_BUCKET_NAME`.',
         requestBody: {
@@ -835,7 +920,7 @@ export const openApiDocument = {
         security: [{ BearerAuth: [] }],
         summary: 'List units',
         description:
-          '**Roles:** Admin. **Use case:** Curriculum tables filtered by exam type / access tier. **Why:** Powers authoring consoles before drilling into learning questions.',
+          '**Roles:** **Admin** (paginated, filters) or **student** (optional `examTypeId`, membership-filtered). **Why:** Admin authoring grids vs student catalog; prefer **`GET /units/my-units`** when using persisted exam-type selections.',
         parameters: [
           { name: 'examTypeId', in: 'query', schema: { type: 'string' } },
           {
@@ -914,6 +999,40 @@ export const openApiDocument = {
           '401': { $ref: '#/components/responses/Unauthorized' },
           '403': { $ref: '#/components/responses/Forbidden' },
           '409': { $ref: '#/components/responses/Conflict' },
+        },
+      },
+    },
+    '/units/my-units': {
+      get: {
+        tags: ['Units'],
+        security: [{ BearerAuth: [] }],
+        summary: 'List units for my selected exam types',
+        description:
+          '**Roles:** Student. **Use case:** Curriculum filtered by **`student_exam_types`** + membership (`free` units only for normal). Returns **`units`** array.',
+        responses: {
+          '200': {
+            description: 'OK',
+            content: {
+              'application/json': {
+                schema: {
+                  allOf: [
+                    { $ref: '#/components/schemas/ApiEnvelope' },
+                    {
+                      properties: {
+                        data: {
+                          type: 'object',
+                          required: ['units'],
+                          properties: { units: { type: 'array', items: { type: 'object' } } },
+                        },
+                      },
+                    },
+                  ],
+                },
+              },
+            },
+          },
+          '401': { $ref: '#/components/responses/Unauthorized' },
+          '403': { $ref: '#/components/responses/Forbidden' },
         },
       },
     },
@@ -1101,6 +1220,81 @@ export const openApiDocument = {
           '400': { $ref: '#/components/responses/BadRequest' },
           '401': { $ref: '#/components/responses/Unauthorized' },
           '403': { $ref: '#/components/responses/Forbidden' },
+        },
+      },
+    },
+    '/questions/bulk': {
+      post: {
+        tags: ['Questions'],
+        security: [{ BearerAuth: [] }],
+        summary: 'Bulk-import learning questions (multipart)',
+        description:
+          '**Roles:** Admin. **multipart/form-data:** `unitId`, `accessType` (`free`|`premium`), `excel` (.xlsx), optional repeated `images` and `audio` files. Excel columns: `question`, `option1`–`option4`, `correct_answer`, `description`, `asset_id`. File basenames (without extension) must match `asset_id`. Objects stored under `{unit_slug}/images/` and `{unit_slug}/audio/`.',
+        requestBody: {
+          required: true,
+          content: {
+            'multipart/form-data': {
+              schema: {
+                type: 'object',
+                required: ['unitId', 'excel'],
+                properties: {
+                  unitId: { type: 'string' },
+                  accessType: { type: 'string', enum: ['free', 'premium'], default: 'free' },
+                  excel: { type: 'string', format: 'binary', description: 'Spreadsheet file' },
+                  images: {
+                    type: 'array',
+                    items: { type: 'string', format: 'binary' },
+                    description: 'Image files keyed by asset_id basename',
+                  },
+                  audio: {
+                    type: 'array',
+                    items: { type: 'string', format: 'binary' },
+                    description: 'Audio files keyed by asset_id basename',
+                  },
+                },
+              },
+            },
+          },
+        },
+        responses: {
+          '200': {
+            description: 'Import finished (may include row-level skips)',
+            content: {
+              'application/json': {
+                schema: {
+                  allOf: [
+                    { $ref: '#/components/schemas/ApiEnvelope' },
+                    {
+                      properties: {
+                        data: {
+                          type: 'object',
+                          required: ['inserted', 'skipped', 'rowErrors'],
+                          properties: {
+                            inserted: { type: 'integer' },
+                            skipped: { type: 'integer' },
+                            rowErrors: {
+                              type: 'array',
+                              items: {
+                                type: 'object',
+                                properties: {
+                                  row: { type: 'integer' },
+                                  message: { type: 'string' },
+                                },
+                              },
+                            },
+                          },
+                        },
+                      },
+                    },
+                  ],
+                },
+              },
+            },
+          },
+          '400': { $ref: '#/components/responses/BadRequest' },
+          '401': { $ref: '#/components/responses/Unauthorized' },
+          '403': { $ref: '#/components/responses/Forbidden' },
+          '404': { $ref: '#/components/responses/NotFound' },
         },
       },
     },
@@ -1317,6 +1511,72 @@ export const openApiDocument = {
           '400': { $ref: '#/components/responses/BadRequest' },
           '401': { $ref: '#/components/responses/Unauthorized' },
           '403': { $ref: '#/components/responses/Forbidden' },
+        },
+      },
+    },
+    '/exam-questions/bulk': {
+      post: {
+        tags: ['Exam questions'],
+        security: [{ BearerAuth: [] }],
+        summary: 'Bulk-import exam bank questions (multipart)',
+        description:
+          '**Roles:** Admin. **multipart/form-data:** `unitId`, `difficulty` (`easy`|`medium`|`hard`), optional `accessType`, `excel`. Columns: `question`, `option1`–`option4`, `correct_answer`, `short_description`, optional per-row `difficulty` overriding the form field.',
+        requestBody: {
+          required: true,
+          content: {
+            'multipart/form-data': {
+              schema: {
+                type: 'object',
+                required: ['unitId', 'difficulty', 'excel'],
+                properties: {
+                  unitId: { type: 'string' },
+                  difficulty: { $ref: '#/components/schemas/QuestionDifficulty' },
+                  accessType: { type: 'string', enum: ['free', 'premium'] },
+                  excel: { type: 'string', format: 'binary' },
+                },
+              },
+            },
+          },
+        },
+        responses: {
+          '200': {
+            description: 'Import finished',
+            content: {
+              'application/json': {
+                schema: {
+                  allOf: [
+                    { $ref: '#/components/schemas/ApiEnvelope' },
+                    {
+                      properties: {
+                        data: {
+                          type: 'object',
+                          required: ['inserted', 'skipped', 'rowErrors'],
+                          properties: {
+                            inserted: { type: 'integer' },
+                            skipped: { type: 'integer' },
+                            rowErrors: {
+                              type: 'array',
+                              items: {
+                                type: 'object',
+                                properties: {
+                                  row: { type: 'integer' },
+                                  message: { type: 'string' },
+                                },
+                              },
+                            },
+                          },
+                        },
+                      },
+                    },
+                  ],
+                },
+              },
+            },
+          },
+          '400': { $ref: '#/components/responses/BadRequest' },
+          '401': { $ref: '#/components/responses/Unauthorized' },
+          '403': { $ref: '#/components/responses/Forbidden' },
+          '404': { $ref: '#/components/responses/NotFound' },
         },
       },
     },
@@ -1647,7 +1907,7 @@ export const openApiDocument = {
         },
       },
     },
-    '/students': {
+    '/admin/students': {
       get: {
         tags: ['Admin students'],
         security: [{ BearerAuth: [] }],
@@ -1705,7 +1965,7 @@ export const openApiDocument = {
         },
       },
     },
-    '/students/{id}': {
+    '/admin/students/{id}': {
       patch: {
         tags: ['Admin students'],
         security: [{ BearerAuth: [] }],
@@ -1748,7 +2008,7 @@ export const openApiDocument = {
         },
       },
     },
-    '/students/{id}/exams': {
+    '/admin/students/{id}/exams': {
       get: {
         tags: ['Admin students'],
         security: [{ BearerAuth: [] }],
@@ -1783,7 +2043,7 @@ export const openApiDocument = {
         },
       },
     },
-    '/analytics/membership': {
+    '/admin/analytics/membership': {
       get: {
         tags: ['Admin analytics'],
         security: [{ BearerAuth: [] }],
@@ -1817,7 +2077,7 @@ export const openApiDocument = {
         },
       },
     },
-    '/analytics/questions': {
+    '/admin/analytics/questions': {
       get: {
         tags: ['Admin analytics'],
         security: [{ BearerAuth: [] }],
@@ -1954,6 +2214,11 @@ export const openApiDocument = {
             maxLength: 12,
             description: 'Optional; uppercase book code for premium signup',
           },
+          examTypeIds: {
+            type: 'array',
+            items: { type: 'string' },
+            description: 'Optional; persisted after signup via student_exam_types',
+          },
         },
       },
       UserPublic: {
@@ -1982,6 +2247,13 @@ export const openApiDocument = {
             },
           },
         ],
+      },
+      StudentExamTypesPutRequest: {
+        type: 'object',
+        required: ['examTypeIds'],
+        properties: {
+          examTypeIds: { type: 'array', items: { type: 'string', minLength: 1 } },
+        },
       },
       LoginRequest: {
         type: 'object',
@@ -2141,7 +2413,7 @@ export const openApiDocument = {
         type: 'object',
         required: ['type', 'filename', 'mimeType'],
         properties: {
-          type: { type: 'string', enum: ['unit-image', 'question-audio'] },
+          type: { type: 'string', enum: ['unit-image', 'question-image', 'question-audio'] },
           filename: { type: 'string', minLength: 1, maxLength: 255 },
           mimeType: { type: 'string', minLength: 1 },
         },
@@ -2191,6 +2463,13 @@ export const openApiDocument = {
           examTypeId: { type: 'string' },
           tags: { type: 'array', items: { type: 'string' } },
           accessType: { type: 'string', enum: ['free', 'premium'], default: 'free' },
+          unitSlug: {
+            type: 'string',
+            minLength: 1,
+            maxLength: 200,
+            description:
+              'Optional override; otherwise derived from unitName with uniqueness suffix',
+          },
           imageKey: { type: 'string' },
           mimeType: { type: 'string' },
         },
@@ -2202,6 +2481,7 @@ export const openApiDocument = {
           examTypeId: { type: 'string' },
           tags: { type: 'array', items: { type: 'string' } },
           accessType: { type: 'string', enum: ['free', 'premium'] },
+          unitSlug: { type: 'string', minLength: 1, maxLength: 200 },
           imageKey: { type: 'string' },
           mimeType: { type: 'string' },
         },
@@ -2227,6 +2507,8 @@ export const openApiDocument = {
           option4: { type: 'string', minLength: 1 },
           correctAnswer: { type: 'string', minLength: 1 },
           description: { type: 'string' },
+          imageKey: { type: 'string' },
+          imageMimeType: { type: 'string' },
           audioKey: { type: 'string' },
           mimeType: { type: 'string' },
           unitId: { type: 'string' },
@@ -2244,6 +2526,8 @@ export const openApiDocument = {
           option4: { type: 'string' },
           correctAnswer: { type: 'string' },
           description: { type: 'string' },
+          imageKey: { type: 'string' },
+          imageMimeType: { type: 'string' },
           audioKey: { type: 'string' },
           mimeType: { type: 'string' },
           accessType: { type: 'string', enum: ['free', 'premium'] },

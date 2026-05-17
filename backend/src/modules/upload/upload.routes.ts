@@ -17,7 +17,7 @@ uploadApp.use('*', authMiddleware);
 
 uploadApp.post('/presign', zValidate('json', presignSchema), async (c) => {
   const input = c.req.valid('json');
-  const result = await createPresignedUpload(c.env, c.env.R2, {
+  const result = await createPresignedUpload(c.env, {
     type: input.type as UploadType,
     filename: input.filename,
     mimeType: input.mimeType,

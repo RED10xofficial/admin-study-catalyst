@@ -1,22 +1,45 @@
 import { and, count, eq } from 'drizzle-orm';
-import type { Db } from '../../db/client';
 import type { R2Bucket } from '@cloudflare/workers-types';
+import type { Db } from '../../db/client';
 import { units, questions } from '@admin-study-catalyst/shared/schema';
 import type { CreateUnitInput, UpdateUnitInput } from '@admin-study-catalyst/shared/validators';
-import { conflict, notFound } from '../../lib/errors';
+import { conflict, notFound, badRequest } from '../../lib/errors';
 import { generateId, now } from '../../lib/id';
+import { generateSlug } from '../../lib/slug';
 import { objectExists, deleteObject, validateMimeFromBytes } from '../../lib/r2';
+
+async function resolveUniqueUnitSlug(
+  db: Db,
+  base: string,
+  excludeUnitId?: string,
+): Promise<string> {
+  const slugBase = generateSlug(base);
+  for (let i = 0; ; i++) {
+    const candidate = i === 0 ? slugBase : `${slugBase}-${i}`;
+    const row = await db
+      .select({ id: units.id })
+      .from(units)
+      .where(eq(units.unitSlug, candidate))
+      .get();
+    if (!row || (excludeUnitId && row.id === excludeUnitId)) {
+      return candidate;
+    }
+  }
+}
 
 export async function createUnit(db: Db, r2: R2Bucket, input: CreateUnitInput) {
   let imageUrl: string | undefined;
 
   if (input.imageKey) {
     const exists = await objectExists(r2, input.imageKey);
-    if (!exists) throw conflict('Image key does not exist in R2. Upload the file first.');
+    if (!exists) throw badRequest('Image key does not exist in R2', 'INVALID_IMAGE_KEY');
     const declaredMime = input.mimeType ?? 'image/jpeg';
     await validateMimeFromBytes(r2, input.imageKey, declaredMime);
     imageUrl = input.imageKey;
   }
+
+  const slugSource = input.unitSlug?.trim() ? input.unitSlug : input.unitName;
+  const unitSlug = await resolveUniqueUnitSlug(db, slugSource);
 
   try {
     const [unit] = await db
@@ -24,6 +47,7 @@ export async function createUnit(db: Db, r2: R2Bucket, input: CreateUnitInput) {
       .values({
         id: generateId(),
         unitName: input.unitName,
+        unitSlug,
         imageUrl: imageUrl ?? null,
         examTypeId: input.examTypeId,
         tags: JSON.stringify(input.tags ?? []),
@@ -79,13 +103,20 @@ export async function updateUnit(db: Db, r2: R2Bucket, id: string, input: Update
   if (input.imageKey !== undefined) {
     if (input.imageKey) {
       const exists = await objectExists(r2, input.imageKey);
-      if (!exists) throw conflict('Image key does not exist in R2');
+      if (!exists) throw badRequest('Image key does not exist in R2', 'INVALID_IMAGE_KEY');
       const declaredMime = input.mimeType ?? 'image/jpeg';
       await validateMimeFromBytes(r2, input.imageKey, declaredMime);
       imageUrl = input.imageKey;
     } else {
       imageUrl = null;
     }
+  }
+
+  let nextSlug = existing.unitSlug;
+  if (input.unitSlug !== undefined && input.unitSlug.trim()) {
+    nextSlug = await resolveUniqueUnitSlug(db, input.unitSlug.trim(), id);
+  } else if (!existing.unitSlug && input.unitName !== undefined) {
+    nextSlug = await resolveUniqueUnitSlug(db, input.unitName, id);
   }
 
   const [updated] = await db
@@ -95,6 +126,7 @@ export async function updateUnit(db: Db, r2: R2Bucket, id: string, input: Update
       ...(input.examTypeId !== undefined && { examTypeId: input.examTypeId }),
       ...(input.tags !== undefined && { tags: JSON.stringify(input.tags) }),
       ...(input.accessType !== undefined && { accessType: input.accessType }),
+      unitSlug: nextSlug,
       imageUrl,
       updatedAt: now(),
     })

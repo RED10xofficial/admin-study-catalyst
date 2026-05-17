@@ -10,7 +10,7 @@ import { kvDel, kvGet, kvKeys, kvSet, TTL_7D } from '../../lib/kv';
 
 export async function registerDirect(
   db: Db,
-  input: { name: string; email: string; phone?: string; password: string },
+  input: { name: string; email: string; phone?: string; password: string; examTypeIds?: string[] },
 ) {
   const existing = await db
     .select({ id: users.id })
@@ -46,12 +46,25 @@ export async function registerDirect(
       membershipType: users.membershipType,
     });
 
+  if (input.examTypeIds?.length) {
+    const { setStudentExamTypes } =
+      await import('../student-exam-types/student-exam-types.service');
+    await setStudentExamTypes(db, user.id, input.examTypeIds);
+  }
+
   return user;
 }
 
 export async function registerWithBookCode(
   db: Db,
-  input: { name: string; email: string; phone?: string; password: string; bookCode: string },
+  input: {
+    name: string;
+    email: string;
+    phone?: string;
+    password: string;
+    bookCode: string;
+    examTypeIds?: string[];
+  },
 ) {
   const normalizedCode = input.bookCode.toUpperCase();
 
@@ -108,6 +121,12 @@ export async function registerWithBookCode(
     .get();
 
   if (!user) throw badRequest('Registration failed', 'REGISTRATION_FAILED');
+
+  if (input.examTypeIds?.length) {
+    const { setStudentExamTypes } =
+      await import('../student-exam-types/student-exam-types.service');
+    await setStudentExamTypes(db, userId, input.examTypeIds);
+  }
 
   return user;
 }

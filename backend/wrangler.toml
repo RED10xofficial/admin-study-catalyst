@@ -2,16 +2,17 @@ name = "admin-study-catalyst-api"
 main = "src/index.ts"
 compatibility_date = "2025-01-01"
 compatibility_flags = ["nodejs_compat"]
+account_id = "fa4bce83d27f6fd19ddcafaa9402a00d"
 
 [[d1_databases]]
 binding = "DB"
 database_name = "admin-study-catalyst-db"
-database_id = "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
+database_id = "d9416bc4-a594-431b-94a4-cfd0ce3c7506"
 migrations_dir = "src/db/migrations"
 
 [[kv_namespaces]]
 binding = "KV"
-id = "local-kv-placeholder"
+id = "1c35ee3de2cf451da71ab4136a88fa92"
 
 [[r2_buckets]]
 binding = "R2"
